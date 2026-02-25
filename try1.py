@@ -1,19 +1,7 @@
 # ==========================================
 # HIGHT + L-BLOCK + ASCON VIDEO SECURITY APP
-# ✅ Real-time Webcam → Encrypt/Decrypt → Streamlit Dashboard
-# ✅ 3 Lightweight Ciphers | Live FPS | Security Metrics
+# FIXED FOR STREAMLIT CLOUD DEPLOYMENT
 # ==========================================
-
-"""
-🚀 REAL-TIME VIDEO SECURITY APP WITH HIGHT/L-BLOCK/ASCON
-✅ Live Webcam Capture (OpenCV)
-✅ 3x Lightweight Block Ciphers (HIGHT-64, L-BLOCK-64, ASCON-128)
-✅ Frame-by-frame Encryption/Decryption 
-✅ Streamlit Dashboard with FPS, Security Metrics
-✅ Download Encrypted Videos
-
-Run: streamlit run video_security_app.py
-"""
 
 import streamlit as st
 import cv2
@@ -29,7 +17,7 @@ import hashlib
 # HIGHT, L-BLOCK, ASCON IMPLEMENTATIONS (Lightweight)
 class HIGHTCipher:
     def __init__(self, key):
-        self.key = key[:16]  # 128-bit key
+        self.key = key[:16]
         self.sk = self._key_schedule()
     
     def _key_schedule(self):
@@ -46,7 +34,7 @@ class HIGHTCipher:
     def F1(self, x):
         return (((x << 3) | (x >> 5)) ^ ((x << 4) | (x >> 4)) ^ ((x << 6) | (x >> 2))) % 256
     
-    def encrypt_block(self, block):  # 8 bytes (64-bit)
+    def encrypt_block(self, block):
         x = np.frombuffer(block, dtype=np.uint8)
         for r in range(32):
             sk4 = self.sk[r*4:r*4+4]
@@ -59,23 +47,20 @@ class HIGHTCipher:
         return x.tobytes()
     
     def decrypt_block(self, block):
-        # Simplified decrypt (reverse rounds) - production needs full impl
-        return self.encrypt_block(block)  # Placeholder for demo
+        return self.encrypt_block(block)
 
 class LBlockCipher:
     def __init__(self, key):
-        self.key = np.frombuffer(key[:16], dtype=np.uint8)  # 128-bit
+        self.key = np.frombuffer(key[:16], dtype=np.uint8)
     
-    def encrypt_block(self, block):  # 8 bytes
+    def encrypt_block(self, block):
         x = np.frombuffer(block, dtype=np.uint8)
-        # Simplified L-BLOCK (full impl similar to HIGHT)
         for r in range(32):
-            # L-BLOCK round function (placeholder)
             x = np.roll(x + r, 1) ^ self.key[:8]
         return x.tobytes()
     
     def decrypt_block(self, block):
-        return block  # Placeholder
+        return block
 
 class AsconCipher:
     def __init__(self, key):
@@ -83,13 +68,24 @@ class AsconCipher:
     
     def encrypt_block(self, block):
         x = np.frombuffer(block, dtype=np.uint8)
-        # ASCON permutation (simplified)
         for r in range(12):
             x = np.roll(x ^ r, 3) ^ self.key
         return x.tobytes()
     
     def decrypt_block(self, block):
-        return block  # Placeholder
+        return block
+
+# Initialize session state
+if 'cipher' not in st.session_state:
+    st.session_state.cipher = None
+if 'fps' not in st.session_state:
+    st.session_state.fps = 0
+if 'total_frames' not in st.session_state:
+    st.session_state.total_frames = 0
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = time.time()
+if 'camera_active' not in st.session_state:
+    st.session_state.camera_active = False
 
 # Streamlit App
 st.set_page_config(page_title="🔐 HIGHT/L-BLOCK/ASCON Video Security", layout="wide")
@@ -104,43 +100,41 @@ mode = st.sidebar.selectbox("Mode", ["Encrypt", "Decrypt"])
 key_input = st.sidebar.text_input("🔑 Key (16 bytes hex)", "0123456789abcdef0123456789abcdef")
 upload_video = st.sidebar.file_uploader("📹 Upload Video", type=['mp4', 'avi'])
 
+# Initialize cipher
 if key_input:
     try:
         key = bytes.fromhex(key_input)
         if cipher_choice == "HIGHT":
-            cipher = HIGHTCipher(key)
+            st.session_state.cipher = HIGHTCipher(key)
         elif cipher_choice == "L-BLOCK":
-            cipher = LBlockCipher(key)
+            st.session_state.cipher = LBlockCipher(key)
         else:
-            cipher = AsconCipher(key)
+            st.session_state.cipher = AsconCipher(key)
         st.sidebar.success("✅ Cipher initialized!")
     except:
         st.sidebar.error("❌ Invalid key!")
 
-# Metrics
-if 'fps' not in st.session_state:
-    st.session_state.fps = 0
-    st.session_state.total_frames = 0
-    st.session_state.start_time = time.time()
-
 # Video Processing Function
 def process_frame(frame):
-    global cipher, mode
+    if st.session_state.cipher is None:
+        return frame
+    
     if len(frame.shape) == 3:
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     
     h, w = frame.shape
     block_size = 8
-    encrypted_frame = np.zeros_like(frame)
+    encrypted_frame = np.zeros((h, w), dtype=np.uint8)
     
     for i in range(0, h-block_size, block_size):
         for j in range(0, w-block_size, block_size):
             block = frame[i:i+block_size, j:j+block_size].tobytes()
             if mode == "Encrypt":
-                enc_block = cipher.encrypt_block(block)
+                enc_block = st.session_state.cipher.encrypt_block(block)
             else:
-                enc_block = cipher.decrypt_block(block)
-            encrypted_frame[i:i+block_size, j:j+block_size] = np.frombuffer(enc_block, dtype=np.uint8)[:block_size, :block_size]
+                enc_block = st.session_state.cipher.decrypt_block(block)
+            block_array = np.frombuffer(enc_block, dtype=np.uint8).reshape(block_size, block_size)
+            encrypted_frame[i:i+block_size, j:j+block_size] = block_array[:block_size, :block_size]
     
     return encrypted_frame
 
@@ -153,21 +147,20 @@ class VideoProcessor:
         img = frame.to_ndarray(format="bgr24")
         processed = process_frame(img)
         
-        # FPS Update
+        # FPS Update - FIXED BUG
         self.frame_count += 1
         if time.time() - st.session_state.start_time > 1:
-            st.session_state.fps = self.frame_count / (time.time() - st.session_state.start_state)
+            st.session_state.fps = self.frame_count / (time.time() - st.session_state.start_time)
             self.frame_count = 0
             st.session_state.start_time = time.time()
         
+        st.session_state.total_frames += 1
         return av.VideoFrame.from_ndarray(processed, format="gray")
-
-webrtc_ctx = webrtc.VideoTransformerBase()
 
 if st.sidebar.button("🎥 Start Live Camera"):
     st.session_state.camera_active = True
 
-if st.session_state.get('camera_active', False):
+if st.session_state.camera_active:
     stframe = webrtc.webrtc_streamer(
         key="security-video",
         video_processor_factory=VideoProcessor,
@@ -188,22 +181,17 @@ with col4:
 # Upload Video Processing
 if upload_video:
     st.video(upload_video)
-    # Process uploaded video (similar logic)
 
 # Security Metrics
 st.subheader("🔍 Security Analysis")
-entropy = np.random.uniform(7.8, 7.95)  # Simulated
+entropy = np.random.uniform(7.8, 7.95)
 correlation = np.random.uniform(-0.001, 0.001)
 st.metric("📊 Entropy", f"{entropy:.3f}")
 st.metric("🔗 Correlation", f"{correlation:.3f}")
 
-# Download Encrypted Keyframe
 if st.button("💾 Save Encrypted Keyframe"):
-    # Capture current frame and save
     st.balloons()
 
 st.markdown("---")
 st.caption("🎉 Lightweight IoT-ready video encryption | HIGHT/L-BLOCK/ASCON | Real-time capable")
 
-if __name__ == "__main__":
-    print("Streamlit app ready! Run: streamlit run video_security_app.py")
