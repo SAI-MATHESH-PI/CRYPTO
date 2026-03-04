@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VHADS Pro v2.1 - 55% ACCURACY SIMULATION</title>
+    <title>VHADS Pro v2.1 - USER INPUT SIMULATION (55% ACCURACY)</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body { 
@@ -20,6 +20,20 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
         .controls { text-align: center; margin: 30px 0; }
+        .upload-zone { 
+            border: 3px dashed #475569; 
+            border-radius: 16px; 
+            padding: 40px; 
+            margin: 20px auto; 
+            max-width: 500px; 
+            text-align: center; 
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-zone:hover, .upload-zone.dragover { 
+            border-color: #10b981; 
+            background: rgba(16,185,129,0.1); 
+        }
         button { 
             background: linear-gradient(90deg, #10b981, #059669); 
             color: white; 
@@ -37,90 +51,51 @@
         button:disabled { opacity: 0.4; cursor: not-allowed; }
         button.running { background: linear-gradient(90deg, #f59e0b, #d97706); }
         
-        .simulation-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 25px; 
-            margin: 25px 0; 
-        }
-        canvas { 
-            width: 100%; 
-            max-width: 650px; 
-            border: 3px solid #334155; 
-            border-radius: 16px; 
-            background: #000; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        }
-        .stats { 
-            font-family: 'Courier New', monospace; 
-            font-size: 20px; 
-            padding: 25px; 
-            background: #0f172a; 
-            border-radius: 12px; 
-            margin: 15px 0;
-            border-left: 6px solid #3b82f6;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        .prediction-badge { 
-            padding: 15px 30px; 
-            border-radius: 30px; 
-            font-weight: 800; 
-            font-size: 20px; 
-            display: inline-block;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+        .simulation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin: 25px 0; }
+        canvas { width: 100%; max-width: 650px; border: 3px solid #334155; border-radius: 16px; background: #000; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        .stats { font-family: 'Courier New', monospace; font-size: 20px; padding: 25px; background: #0f172a; border-radius: 12px; margin: 15px 0; border-left: 6px solid #3b82f6; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .prediction-badge { padding: 15px 30px; border-radius: 30px; font-weight: 800; font-size: 20px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .normal { background: rgba(16,185,129,0.25); color: #10b981; border: 3px solid #10b981; }
         .fault { background: rgba(245,158,11,0.25); color: #f59e0b; border: 3px solid #f59e0b; }
         .reduced { background: rgba(59,130,246,0.25); color: #3b82f6; border: 3px solid #3b82f6; }
         .differential { background: rgba(239,68,68,0.25); color: #ef4444; border: 3px solid #ef4444; }
         
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin: 25px 0; }
-        .chart-container { 
-            background: linear-gradient(135deg, #1e293b, #334155); 
-            padding: 25px; 
-            border-radius: 16px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
-        }
-        .chart-title { 
-            text-align: center; 
-            margin-bottom: 20px; 
-            color: #60a5fa; 
-            font-weight: 700; 
-            font-size: 18px;
-        }
-        .report { 
-            background: #0f172a; 
-            padding: 25px; 
-            border-radius: 16px; 
-            font-family: 'Courier New', monospace; 
-            white-space: pre-wrap; 
-            max-height: 450px; 
-            overflow-y: auto;
-            border: 1px solid #475569;
-            line-height: 1.6;
-        }
+        .chart-container { background: linear-gradient(135deg, #1e293b, #334155); padding: 25px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+        .chart-title { text-align: center; margin-bottom: 20px; color: #60a5fa; font-weight: 700; font-size: 18px; }
+        .report { background: #0f172a; padding: 25px; border-radius: 16px; font-family: 'Courier New', monospace; white-space: pre-wrap; max-height: 450px; overflow-y: auto; border: 1px solid #475569; line-height: 1.6; }
         .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 VHADS Pro v2.1 - RESEARCH SIMULATION</h1>
-            <p>HIGHT Attack Detection System • 50-60% Realistic Accuracy • Full ML Dashboard</p>
+            <h1>🔐 VHADS Pro v2.1 - USER INPUT SIMULATION</h1>
+            <p>Upload Video/Image → HIGHT Attack Detection → 50-60% Realistic Accuracy</p>
         </div>
 
         <div class="controls">
-            <button id="runAnalysisBtn" onclick="runAnalysis(64)">🚀 Analyze 64 Frames</button>
-            <button id="runAnalysisBtnLong" onclick="runAnalysis(256)">📊 Analyze 256 Frames (Full)</button>
-            <button id="stopBtn" onclick="stopAnalysis()" disabled style="background: linear-gradient(90deg, #ef4444, #dc2626);">⏹️ STOP</button>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept="image/*,video/*" hidden>
+                <label for="fileInput" style="cursor:pointer;font-size:18px;">
+                    📁 Upload Video/Image or Drag & Drop
+                </label>
+                <div id="fileName" style="margin-top:10px;font-weight:600;"></div>
+            </div>
+            <div>
+                <button id="runAnalysisBtn" onclick="runAnalysis(64)" disabled>🚀 Analyze 64 Frames</button>
+                <button id="runAnalysisBtnLong" onclick="runAnalysis(256)" disabled>📊 Analyze 256 Frames (Full)</button>
+                <button id="stopBtn" onclick="stopAnalysis()" disabled style="background: linear-gradient(90deg, #ef4444, #dc2626);">⏹️ STOP</button>
+            </div>
             <div style="margin-top: 15px; font-size: 16px;">
-                Attack Rate: <span id="attackRate">25%</span> | Progress: <span id="progress">0</span>%
+                Attack Rate: <span id="attackRate">25%</span> | Progress: <span id="progress">0</span>% | 
+                <span id="statusText">Upload file to begin...</span>
             </div>
         </div>
 
         <div class="simulation-grid">
             <div>
-                <h3>🎥 SIMULATED CCTV INPUT</h3>
+                <h3>📁 USER INPUT FRAME</h3>
                 <canvas id="inputCanvas" width="640" height="480"></canvas>
                 <div class="stats">
                     Frame: <span id="frameNum">0</span> | 
@@ -154,11 +129,11 @@
             </div>
             <div class="chart-container">
                 <div class="chart-title">📈 Training vs Validation Accuracy</div>
-                <div id="trainingChart" style="height:350px;"></div>
+                <div id="accuracyChart" style="height:350px;"></div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">📊 Per-Class F1 Scores</div>
-                <div id="f1Chart" style="height:350px;"></div>
+                <div class="chart-title">📉 Training vs Validation Loss</div>
+                <div id="lossChart" style="height:350px;"></div>
             </div>
         </div>
 
@@ -166,7 +141,7 @@
             <div class="chart-container">
                 <div class="chart-title">📋 Classification Report</div>
                 <div id="classificationReport" class="report">
-                    Run analysis to generate report...
+                    Upload file and run analysis to generate report...
                 </div>
             </div>
             <div class="chart-container">
@@ -181,70 +156,82 @@
     <script>
         // GLOBAL STATE
         let isRunning = false, results = [], frameCount = 0, totalFrames = 0, lastTime = 0;
+        let userFile = null, fileCanvas = null;
         
-        // SIMULATED CCTV GENERATOR (Night parking lot)
-        const CCTV_SIM = {
-            generateFrame(i) {
-                const frame = new Uint8Array(64*64);
-                const t = i * 0.033; // 30 FPS
-                for(let y=0; y<64; y++) for(let x=0; x<64; x++) {
-                    let p = 45 + Math.random()*25; // Night baseline
-                    
-                    // Scene geometry
-                    if(x < 18) p += 35; // Wall
-                    if(y > 42) p += 28; // Floor
-                    if(x > 42 && y < 22) p += 32; // Pillar
-                    
-                    // Moving person (1.2m/s)
-                    const px = 22 + Math.sin(t*0.7)*15;
-                    const py = 28 + Math.cos(t*0.5)*10;
-                    const d = Math.hypot(x-px, y-py);
-                    if(d < 10) p = Math.max(200, p + 140 - d*12);
-                    
-                    // Timestamp flicker
-                    if(x >= 3 && x <= 12 && y >= 1 && y <= 5) {
-                        p += (Math.sin(t*10 + (x+y)*2) * 90 + 130) * 0.7;
-                    }
-                    
-                    frame[y*64+x] = Math.max(0, Math.min(255, p));
-                }
-                return frame;
-            },
-            
-            render(canvas, frameData, encrypted = null) {
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = false;
-                ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,640,480);
-                
-                for(let by=0; by<8; by++) for(let bx=0; bx<8; bx++) {
-                    const x = bx*80, y = by*60;
-                    let avg = 128;
-                    
-                    if(frameData) {
-                        const idx = (by*8 + bx*8)*64;
-                        avg = (frameData[idx] + frameData[idx+1] + frameData[idx+64] + frameData[idx+65])/4;
-                    }
-                    
-                    if(encrypted) {
-                        const encIdx = bx % 8;
-                        const hue = (encrypted[encIdx] * 1.4 + frameCount * 0.3) % 360;
-                        ctx.fillStyle = `hsl(${hue}, 80%, ${25 + encrypted[encIdx]*0.35}%)`;
-                    } else {
-                        ctx.fillStyle = `rgb(${avg},${avg},${avg})`;
-                    }
-                    
-                    ctx.fillRect(x, y, 80, 60);
-                    ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
-                    ctx.strokeRect(x, y, 80, 60);
-                }
+        // FILE PROCESSING
+        document.getElementById('uploadZone').addEventListener('click', () => document.getElementById('fileInput').click());
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            userFile = e.target.files[0];
+            if(userFile) {
+                document.getElementById('fileName').textContent = userFile.name;
+                document.getElementById('runAnalysisBtn').disabled = false;
+                document.getElementById('runAnalysisBtnLong').disabled = false;
+                document.getElementById('statusText').textContent = `File loaded: ${userFile.name}`;
+                loadFilePreview();
             }
-        };
-
-        // HIGHT CIPHER (TTAS.KO-12.0042 standard)
+        });
+        
+        // Drag & drop
+        document.getElementById('uploadZone').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.getElementById('uploadZone').classList.add('dragover');
+        });
+        document.getElementById('uploadZone').addEventListener('dragleave', () => {
+            document.getElementById('uploadZone').classList.remove('dragover');
+        });
+        document.getElementById('uploadZone').addEventListener('drop', (e) => {
+            e.preventDefault();
+            document.getElementById('uploadZone').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if(files.length) {
+                document.getElementById('fileInput').files = files;
+                userFile = files[0];
+                document.getElementById('fileName').textContent = userFile.name;
+                document.getElementById('runAnalysisBtn').disabled = false;
+                document.getElementById('runAnalysisBtnLong').disabled = false;
+                document.getElementById('statusText').textContent = `File loaded: ${userFile.name}`;
+                loadFilePreview();
+            }
+        });
+        
+        function loadFilePreview() {
+            const canvas = document.getElementById('inputCanvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, 640, 480);
+                fileCanvas = canvas;
+            };
+            img.src = URL.createObjectURL(userFile);
+        }
+        
+        // SIMULATED FRAME FROM USER INPUT
+        function getUserFrame(index) {
+            if(!fileCanvas) return new Uint8Array(64*64).fill(128);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 64; tempCanvas.height = 64;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(fileCanvas, 0, 0, 64, 64);
+            const imageData = tempCtx.getImageData(0, 0, 64, 64).data;
+            const frame = new Uint8Array(64*64);
+            for(let i = 0; i < imageData.length; i += 4) {
+                frame[i/4] = (imageData[i] + imageData[i+1] + imageData[i+2]) / 3;
+            }
+            return frame;
+        }
+        
+        // HIGHT CIPHER (authentic)
         const HIGHT = {
             wk: new Uint8Array([90,77,57,46,35,24,13,2]),
             encrypt(data, attack='normal') {
                 let x = new Uint8Array(data.slice(0,8));
-                for(let i=0; i<8; i++) x[i] = i%2 ? x[i]^this.wk[i] : (x[i]+this.wk[i])&
-
-
+                for(let i=0; i<8; i++) x[i] = i%2 ? x[i]^this.wk[i] : (x[i]+this.wk[i])&255;
+                
+                for(let r=0; r<32; r++) {
+                    if(attack=='fault' && r==16) { x[3] ^= 128; continue; }
+                    if(attack=='reduced' && r>=24) break;
+                    if(attack=='differential' && r==8) { x[0] ^= 17; continue; }
+                    
+                    let t1 = ((x[6]<<1|x[6]>>>7) ^ (x[6]<<2|x[6]>>>6) ^ (x[6]<<7|x[6]>>>1) + ((r*4+3)&255)) & 255;
+                    x[0] = x[7] ^ t1;
+                    let t2 = ((x[0
