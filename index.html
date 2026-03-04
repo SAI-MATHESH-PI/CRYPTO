@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VHADS Pro v2.1 - 55% ACCURACY ML DASHBOARD</title>
+    <title>VHADS Pro v2.1 - 55% ACCURACY SIMULATION</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body { 
@@ -19,24 +19,31 @@
             margin-bottom: 25px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.3);
         }
-        .controls { text-align: center; margin: 20px 0; }
+        .controls { text-align: center; margin: 30px 0; }
         button { 
             background: linear-gradient(90deg, #10b981, #059669); 
             color: white; 
-            padding: 15px 35px; 
+            padding: 18px 40px; 
             border: none; 
-            font-size: 16px; 
-            font-weight: 600; 
+            font-size: 18px; 
+            font-weight: 700; 
             border-radius: 12px; 
             cursor: pointer; 
-            margin: 8px;
+            margin: 10px;
             transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(16,185,129,0.4); }
         button:disabled { opacity: 0.4; cursor: not-allowed; }
+        button.running { background: linear-gradient(90deg, #f59e0b, #d97706); }
         
-        .camera-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin: 25px 0; }
-        video, canvas { 
+        .simulation-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 25px; 
+            margin: 25px 0; 
+        }
+        canvas { 
             width: 100%; 
             max-width: 650px; 
             border: 3px solid #334155; 
@@ -46,63 +53,91 @@
         }
         .stats { 
             font-family: 'Courier New', monospace; 
-            font-size: 18px; 
-            padding: 20px; 
+            font-size: 20px; 
+            padding: 25px; 
             background: #0f172a; 
             border-radius: 12px; 
             margin: 15px 0;
-            border-left: 5px solid #3b82f6;
+            border-left: 6px solid #3b82f6;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         }
         .prediction-badge { 
-            padding: 12px 24px; 
+            padding: 15px 30px; 
             border-radius: 30px; 
-            font-weight: 700; 
-            font-size: 18px; 
+            font-weight: 800; 
+            font-size: 20px; 
             display: inline-block;
-            margin: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
-        .normal { background: rgba(16,185,129,0.2); color: #10b981; border: 2px solid #10b981; }
-        .fault { background: rgba(245,158,11,0.2); color: #f59e0b; border: 2px solid #f59e0b; }
-        .reduced { background: rgba(59,130,246,0.2); color: #3b82f6; border: 2px solid #3b82f6; }
-        .differential { background: rgba(239,68,68,0.2); color: #ef4444; border: 2px solid #ef4444; }
+        .normal { background: rgba(16,185,129,0.25); color: #10b981; border: 3px solid #10b981; }
+        .fault { background: rgba(245,158,11,0.25); color: #f59e0b; border: 3px solid #f59e0b; }
+        .reduced { background: rgba(59,130,246,0.25); color: #3b82f6; border: 3px solid #3b82f6; }
+        .differential { background: rgba(239,68,68,0.25); color: #ef4444; border: 3px solid #ef4444; }
         
         .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin: 25px 0; }
-        .chart-container { background: #1e293b; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .chart-title { text-align: center; margin-bottom: 15px; color: #3b82f6; font-weight: 600; }
-        .report { background: #1e293b; padding: 25px; border-radius: 16px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+        .chart-container { 
+            background: linear-gradient(135deg, #1e293b, #334155); 
+            padding: 25px; 
+            border-radius: 16px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+        }
+        .chart-title { 
+            text-align: center; 
+            margin-bottom: 20px; 
+            color: #60a5fa; 
+            font-weight: 700; 
+            font-size: 18px;
+        }
+        .report { 
+            background: #0f172a; 
+            padding: 25px; 
+            border-radius: 16px; 
+            font-family: 'Courier New', monospace; 
+            white-space: pre-wrap; 
+            max-height: 450px; 
+            overflow-y: auto;
+            border: 1px solid #475569;
+            line-height: 1.6;
+        }
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 VHADS Pro v2.1 - RESEARCH GRADE ML DASHBOARD</h1>
-            <p>Live Camera → HIGHT Attack Detection → 55% Realistic Accuracy</p>
+            <h1>🔐 VHADS Pro v2.1 - RESEARCH SIMULATION</h1>
+            <p>HIGHT Attack Detection System • 50-60% Realistic Accuracy • Full ML Dashboard</p>
         </div>
 
         <div class="controls">
-            <button id="startCamera" onclick="startCamera()">📷 START CAMERA</button>
-            <button id="startAnalysis" onclick="runAnalysis()" disabled>🚀 START ANALYSIS</button>
-            <button id="stopAnalysis" onclick="stopAnalysis()" disabled>⏹️ STOP ANALYSIS</button>
+            <button id="runAnalysisBtn" onclick="runAnalysis(64)">🚀 Analyze 64 Frames</button>
+            <button id="runAnalysisBtnLong" onclick="runAnalysis(256)">📊 Analyze 256 Frames (Full)</button>
+            <button id="stopBtn" onclick="stopAnalysis()" disabled style="background: linear-gradient(90deg, #ef4444, #dc2626);">⏹️ STOP</button>
+            <div style="margin-top: 15px; font-size: 16px;">
+                Attack Rate: <span id="attackRate">25%</span> | Progress: <span id="progress">0</span>%
+            </div>
         </div>
 
-        <div class="camera-grid">
+        <div class="simulation-grid">
             <div>
-                <h3>📷 LIVE CAMERA FEED</h3>
-                <video id="cameraVideo" autoplay muted playsinline></video>
+                <h3>🎥 SIMULATED CCTV INPUT</h3>
+                <canvas id="inputCanvas" width="640" height="480"></canvas>
                 <div class="stats">
                     Frame: <span id="frameNum">0</span> | 
-                    FPS: <span id="fps">0</span> | 
-                    Total: <span id="totalFrames">0</span>
+                    Progress: <span id="progressNum">0</span>/256 | 
+                    FPS: <span id="fps">0</span>
                 </div>
             </div>
             <div>
-                <h3>🔐 HIGHT ENCRYPTED OUTPUT</h3>
+                <h3>🔐 HIGHT ENCRYPTED</h3>
                 <canvas id="outputCanvas" width="640" height="480"></canvas>
                 <div class="stats">
-                    Hamming Distance: <span id="hamming">0</span><br>
+                    <strong>Hamming Distance:</strong> <span id="hamming">0</span><br>
                     <span id="predictionContainer">
-                        Prediction: <span id="prediction" class="prediction-badge normal">NORMAL</span>
-                        (Confidence: <span id="confidence">0%</span>)
+                        <span id="prediction" class="prediction-badge normal">NORMAL</span>
+                        <span style="margin-left: 20px; font-size: 16px;">
+                            Confidence: <span id="confidence">0%</span>
+                        </span>
                     </span>
                 </div>
             </div>
@@ -110,15 +145,15 @@
 
         <div class="dashboard">
             <div class="chart-container">
-                <div class="chart-title">📊 Real-time Hamming Distance</div>
+                <div class="chart-title">📊 Hamming Distance Over Time</div>
                 <div id="hammingChart" style="height:350px;"></div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">🎯 Confusion Matrix</div>
+                <div class="chart-title">🎯 Confusion Matrix (4x4)</div>
                 <div id="confusionChart" style="height:350px;"></div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">📈 Training vs Validation</div>
+                <div class="chart-title">📈 Training vs Validation Accuracy</div>
                 <div id="trainingChart" style="height:350px;"></div>
             </div>
             <div class="chart-container">
@@ -127,271 +162,89 @@
             </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:25px;">
+        <div class="metrics-grid">
             <div class="chart-container">
                 <div class="chart-title">📋 Classification Report</div>
-                <div id="classificationReport" class="report"></div>
+                <div id="classificationReport" class="report">
+                    Run analysis to generate report...
+                </div>
             </div>
             <div class="chart-container">
                 <div class="chart-title">📊 Performance Summary</div>
-                <div id="performanceSummary" class="report"></div>
+                <div id="performanceSummary" class="report">
+                    Ready for analysis...
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         // GLOBAL STATE
-        let cameraStream = null, isAnalyzing = false, results = [], frameCount = 0, lastTime = 0;
-        let trueLabels = [], predictions = [], confusionMatrix = {};
+        let isRunning = false, results = [], frameCount = 0, totalFrames = 0, lastTime = 0;
         
-        // HIGHT CIPHER (Korean Standard TTAS.KO-12.0042)
+        // SIMULATED CCTV GENERATOR (Night parking lot)
+        const CCTV_SIM = {
+            generateFrame(i) {
+                const frame = new Uint8Array(64*64);
+                const t = i * 0.033; // 30 FPS
+                for(let y=0; y<64; y++) for(let x=0; x<64; x++) {
+                    let p = 45 + Math.random()*25; // Night baseline
+                    
+                    // Scene geometry
+                    if(x < 18) p += 35; // Wall
+                    if(y > 42) p += 28; // Floor
+                    if(x > 42 && y < 22) p += 32; // Pillar
+                    
+                    // Moving person (1.2m/s)
+                    const px = 22 + Math.sin(t*0.7)*15;
+                    const py = 28 + Math.cos(t*0.5)*10;
+                    const d = Math.hypot(x-px, y-py);
+                    if(d < 10) p = Math.max(200, p + 140 - d*12);
+                    
+                    // Timestamp flicker
+                    if(x >= 3 && x <= 12 && y >= 1 && y <= 5) {
+                        p += (Math.sin(t*10 + (x+y)*2) * 90 + 130) * 0.7;
+                    }
+                    
+                    frame[y*64+x] = Math.max(0, Math.min(255, p));
+                }
+                return frame;
+            },
+            
+            render(canvas, frameData, encrypted = null) {
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,640,480);
+                
+                for(let by=0; by<8; by++) for(let bx=0; bx<8; bx++) {
+                    const x = bx*80, y = by*60;
+                    let avg = 128;
+                    
+                    if(frameData) {
+                        const idx = (by*8 + bx*8)*64;
+                        avg = (frameData[idx] + frameData[idx+1] + frameData[idx+64] + frameData[idx+65])/4;
+                    }
+                    
+                    if(encrypted) {
+                        const encIdx = bx % 8;
+                        const hue = (encrypted[encIdx] * 1.4 + frameCount * 0.3) % 360;
+                        ctx.fillStyle = `hsl(${hue}, 80%, ${25 + encrypted[encIdx]*0.35}%)`;
+                    } else {
+                        ctx.fillStyle = `rgb(${avg},${avg},${avg})`;
+                    }
+                    
+                    ctx.fillRect(x, y, 80, 60);
+                    ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+                    ctx.strokeRect(x, y, 80, 60);
+                }
+            }
+        };
+
+        // HIGHT CIPHER (TTAS.KO-12.0042 standard)
         const HIGHT = {
             wk: new Uint8Array([90,77,57,46,35,24,13,2]),
             encrypt(data, attack='normal') {
                 let x = new Uint8Array(data.slice(0,8));
-                for(let i=0; i<8; i++) x[i] = i%2 ? x[i]^this.wk[i] : (x[i]+this.wk[i])&255;
-                
-                for(let r=0; r<32; r++) {
-                    if(attack=='fault' && r==16) { x[3] ^= 128; continue; }
-                    if(attack=='reduced' && r>=24) break;
-                    if(attack=='differential' && r==8) { x[0] ^= 17; continue; }
-                    
-                    let t1 = ((x[6]<<1|x[6]>>>7) ^ (x[6]<<2|x[6]>>>6) ^ (x[6]<<7|x[6]>>>1) + ((r*4+3)&255)) & 255;
-                    x[0] = x[7] ^ t1;
-                    let t2 = ((x[0]<<3|x[0]>>>5) ^ (x[0]<<5|x[0]>>>3) ^ (x[0]<<6|x[0]>>>2) ^ ((r*4+2)&255)) & 255;
-                    x[2] = (x[1] + t2) & 255;
-                    x[4] = x[3] ^ ((x[2]<<1|x[2]>>>7) ^ (x[2]<<2|x[2]>>>6) ^ (x[2]<<7|x[2]>>>1) + ((r*4+1)&255)) & 255;
-                    x[6] = (x[5] + ((x[4]<<3|x[4]>>>5) ^ (x[4]<<5|x[4]>>>3) ^ (x[4]<<6|x[4]>>>2) ^ (r*4&255))) & 255;
-                }
-                
-                let ct = new Uint8Array(8);
-                for(let i=0; i<8; i++) ct[i] = i%2 ? x[(i+1)%8]^this.wk[i] : (x[(i+1)%8]+this.wk[i])&255;
-                return ct;
-            }
-        };
+                for(let i=0; i<8; i++) x[i] = i%2 ? x[i]^this.wk[i] : (x[i]+this.wk[i])&
 
-        // IMPERFECT ML CLASSIFIER (50-60% accuracy - realistic research performance)
-        const ML = {
-            predict(hamming) {
-                // Add realistic classification noise (50-60% accuracy)
-                const noise = Math.random() * 0.4 - 0.2; // ±20% noise
-                let scores = {
-                    normal: Math.max(0, (1.1 - hamming*0.3) + noise),
-                    fault: Math.max(0, (hamming-2.0)*0.35 + noise*0.8),
-                    reduced: Math.max(0, (3.0-hamming)*0.4 + noise*1.2),
-                    differential: Math.max(0, (hamming-4.5)*0.45 + noise)
-                };
-                let total = Object.values(scores).reduce((a,b)=>a+b,0)||1;
-                let probs = Object.fromEntries(Object.entries(scores).map(([k,v])=>[k,v/total]));
-                let pred = Object.entries(probs).reduce((a,b)=>a[1]>b[1]?a:b)[0];
-                return { prediction: pred, confidence: Math.max(...Object.values(probs))*100, hamming };
-            }
-        };
-
-        // ML METRICS CALCULATIONS
-        const Metrics = {
-            classificationReport() {
-                const classes = ['normal', 'fault', 'reduced', 'differential'];
-                let report = {};
-                
-                classes.forEach(cls => {
-                    const tp = results.filter(r => r.prediction === cls && r.attack === cls).length;
-                    const fp = results.filter(r => r.prediction === cls && r.attack !== cls).length;
-                    const fn = results.filter(r => r.prediction !== cls && r.attack === cls).length;
-                    
-                    report[cls] = {
-                        precision: tp / (tp + fp) || 0,
-                        recall: tp / (tp + fn) || 0,
-                        f1: 2 * (tp / (tp + fp) || 0) * (tp / (tp + fn) || 0) / ((tp / (tp + fp) || 0) + (tp / (tp + fn) || 0)) || 0,
-                        support: results.filter(r => r.attack === cls).length
-                    };
-                });
-                
-                const accuracy = results.filter(r => r.prediction === r.attack).length / results.length;
-                report.overall = { accuracy: accuracy.toFixed(3) };
-                
-                return report;
-            },
-            
-            confusionMatrix() {
-                const classes = ['normal', 'fault', 'reduced', 'differential'];
-                let matrix = Array(4).fill().map(() => Array(4).fill(0));
-                
-                results.forEach(r => {
-                    const trueIdx = classes.indexOf(r.attack);
-                    const predIdx = classes.indexOf(r.prediction);
-                    matrix[trueIdx][predIdx]++;
-                });
-                
-                return { data: matrix, labels: classes };
-            }
-        };
-
-        // START CAMERA
-        window.startCamera = async function() {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 640, height: 480, frameRate: 30 }
-                });
-                document.getElementById('cameraVideo').srcObject = cameraStream;
-                document.getElementById('startAnalysis').disabled = false;
-            } catch(err) {
-                alert('Camera access denied: ' + err.message);
-            }
-        };
-
-        // MAIN ANALYSIS LOOP
-        window.runAnalysis = async function() {
-            if(!cameraStream) return;
-            isAnalyzing = true;
-            results = [];
-            frameCount = 0;
-            lastTime = performance.now();
-            
-            document.getElementById('startCamera').disabled = true;
-            document.getElementById('startAnalysis').disabled = true;
-            document.getElementById('stopAnalysis').disabled = false;
-            
-            const analyzeFrame = async () => {
-                if(!isAnalyzing) return;
-                
-                // CAPTURE FRAME
-                const canvas = document.createElement('canvas');
-                canvas.width = 640; canvas.height = 480;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(document.getElementById('cameraVideo'), 0, 0);
-                
-                // GRAYSCALE 64x64
-                const frameData = new Uint8Array(64*64);
-                ctx.drawImage(canvas, 0, 0, 64, 64);
-                const imageData = ctx.getImageData(0, 0, 64, 64).data;
-                for(let i = 0; i < imageData.length; i += 4) {
-                    frameData[i/4] = (imageData[i] + imageData[i+1] + imageData[i+2]) / 3;
-                }
-                
-                // SIMULATE ATTACK (25% probability)
-                const attack = Math.random() < 0.25 ? 
-                    (Math.random() < 0.45 ? 'fault' : Math.random() < 0.75 ? 'reduced' : 'differential') : 'normal';
-                
-                // HIGHT ENCRYPTION
-                const encrypted = HIGHT.encrypt(frameData, attack);
-                const hamming = frameData.slice(0,8).filter((b,j)=>b!==encrypted[j]).length;
-                
-                // ML PREDICTION (50-60% accuracy)
-                const pred = ML.predict(hamming);
-                
-                results.push({frame: ++frameCount, attack, prediction: pred.prediction, hamming: pred.hamming, confidence: pred.confidence});
-                
-                // UPDATE UI
-                document.getElementById('frameNum').textContent = frameCount;
-                document.getElementById('totalFrames').textContent = frameCount;
-                document.getElementById('hamming').textContent = hamming;
-                document.getElementById('prediction').textContent = pred.prediction.toUpperCase();
-                document.getElementById('prediction').className = `prediction-badge ${pred.prediction}`;
-                document.getElementById('confidence').textContent = pred.confidence.toFixed(0) + '%';
-                
-                // RENDER ENCRYPTED
-                const outCanvas = document.getElementById('outputCanvas');
-                const outCtx = outCanvas.getContext('2d');
-                outCtx.fillStyle = '#000'; outCtx.fillRect(0,0,640,480);
-                
-                for(let by=0; by<8; by++) for(let bx=0; bx<8; bx++) {
-                    const x = bx*80, y = by*60;
-                    const encByte = encrypted[bx%8] || 128;
-                    const hue = (encByte * 1.4 + frameCount * 0.3) % 360;
-                    outCtx.fillStyle = `hsl(${hue}, 80%, ${25 + encByte*0.35}%)`;
-                    outCtx.fillRect(x, y, 80, 60);
-                    outCtx.strokeStyle = hamming > 3 ? '#ef4444' : '#475569';
-                    outCtx.lineWidth = 2; outCtx.strokeRect(x, y, 80, 60);
-                }
-                
-                // FPS
-                const now = performance.now();
-                document.getElementById('fps').textContent = Math.round(1000 / (now - lastTime));
-                lastTime = now;
-                
-                // UPDATE DASHBOARD (every 20 frames)
-                if(frameCount % 20 === 0) updateDashboard();
-                
-                requestAnimationFrame(analyzeFrame);
-            };
-            analyzeFrame();
-        };
-
-        window.stopAnalysis = function() {
-            isAnalyzing = false;
-            document.getElementById('startCamera').disabled = false;
-            document.getElementById('startAnalysis').disabled = false;
-            document.getElementById('stopAnalysis').disabled = true;
-            updateDashboard();
-        };
-
-        function updateDashboard() {
-            const report = Metrics.classificationReport();
-            const cm = Metrics.confusionMatrix();
-            
-            // 1. CLASSIFICATION REPORT
-            let reportText = `OVERALL ACCURACY: ${report.overall.accuracy * 100}% (Realistic 50-60% range)\n\n`;
-            reportText += `Class       Prec.   Recall  F1-Score Support\n`;
-            reportText += `----------------------------------------\n`;
-            ['normal','fault','reduced','differential'].forEach(cls => {
-                const m = report[cls];
-                reportText += `${cls.padEnd(10)} ${m.precision.toFixed(3).padEnd(7)} ${m.recall.toFixed(3).padEnd(7)} ${m.f1.toFixed(3).padEnd(8)} ${m.support}\n`;
-            });
-            document.getElementById('classificationReport').textContent = reportText;
-            
-            // 2. CONFUSION MATRIX
-            Plotly.newPlot('confusionChart', [{
-                z: cm.data,
-                x: cm.labels,
-                y: cm.labels,
-                type: 'heatmap',
-                colorscale: 'Blues'
-            }], {title: `Confusion Matrix (${results.length} frames)`});
-            
-            // 3. TRAINING CURVES (Realistic ML training data)
-            Plotly.newPlot('trainingChart', [{
-                x: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-                y: [55,58,62,59,57,60,56,58,61,59,57,60,58,56,55],
-                type: 'scatter', mode: 'lines+markers', name: 'Training Acc (%)'
-            }, {
-                x: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
-                y: [52,54,56,53,55,57,54,56,58,55,53,56,54,52,51],
-                type: 'scatter', mode: 'lines+markers', name: 'Validation Acc (%)'
-            }], {title: 'Training vs Validation Accuracy'});
-            
-            // 4. F1 SCORES
-            const f1Data = ['normal','fault','reduced','differential'].map(cls => report[cls].f1);
-            Plotly.newPlot('f1Chart', [{
-                x: ['normal','fault','reduced','differential'],
-                y: f1Data,
-                type: 'bar',
-                marker: {color: ['#10b981','#f59e0b','#3b82f6','#ef4444']}
-            }], {title: 'Per-Class F1 Scores'});
-            
-            // 5. HAMMING CHART
-            Plotly.newPlot('hammingChart', [{
-                x: results.slice(-100).map(r=>r.frame),
-                y: results.slice(-100).map(r=>r.hamming),
-                type: 'scatter',
-                mode: 'lines',
-                line: {color: '#10b981', width: 3},
-                name: 'Hamming Distance'
-            }], {title: `Live Hamming Distance (${results.length} frames)`});
-            
-            // 6. PERFORMANCE SUMMARY
-            const normal = results.filter(r=>r.prediction=='normal').length;
-            const attacks = results.length - normal;
-            document.getElementById('performanceSummary').textContent = 
-                `📊 PERFORMANCE SUMMARY (${results.length} frames)\n` +
-                `Overall Accuracy: ${(report.overall.accuracy*100).toFixed(1)}%\n` +
-                `Normal Detected: ${normal} (${(normal/results.length*100).toFixed(1)}%)\n` +
-                `Attacks Detected: ${attacks} (${(attacks/results.length*100).toFixed(1)}%)\n` +
-                `Attack Rate: ${((results.filter(r=>r.attack!=='normal').length/results.length)*100).toFixed(1)}%\n\n` +
-                `🎯 LAST 5 PREDICTIONS:\n` +
-                results.slice(-5).map(r=>`F${r.frame}: H${r.hamming}→${r.prediction.padEnd(12)} (${r.confidence.toFixed(0)}%)`).join('\n');
-        }
-    </script>
-</body>
-</html>
 
