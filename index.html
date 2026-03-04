@@ -3,124 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VHADS Pro v2.0 - HIGHT Attack Detection</title>
+    <title>VHADS Pro v2.0 - HIGHT Attack Detection System</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="css/vhads.css">
 </head>
 <body>
-    <!-- SAME HTML STRUCTURE FROM PREVIOUS RESPONSE -->
-    <div class="app">
-        <header class="app-header">
+    <div class="app" role="main" aria-label="VHADS Pro Dashboard">
+        <!-- Header -->
+        <header class="app-header" role="banner">
             <div class="header-content">
                 <div class="logo">
-                    <span class="logo-icon">🔐</span>
-                    <span class="logo-text">VHADS Pro v2.0</span>
+                    <span class="logo-icon" aria-hidden="true">🔐</span>
+                    <h1 class="logo-text sr-only">VHADS Pro v2.0</h1>
                 </div>
                 <div class="header-meta">
-                    <span class="version">Production</span>
-                    <span class="status" data-status="ready">Ready</span>
+                    <span class="version">v2.0.2</span>
+                    <span class="status ready" id="status" data-status="ready" role="status" aria-live="polite">
+                        Ready for Analysis
+                    </span>
                 </div>
             </div>
         </header>
 
-        <section class="control-panel">
-            <div class="upload-zone">
-                <input type="file" id="videoInput" accept="video/*" hidden>
+        <!-- Controls -->
+        <section class="control-panel" aria-labelledby="controls-heading">
+            <h2 id="controls-heading" class="sr-only">Analysis Controls</h2>
+            
+            <div class="upload-zone" id="uploadZone" role="region" aria-label="Video Upload">
+                <input type="file" id="videoInput" accept="video/*" hidden aria-describedby="upload-help">
                 <label for="videoInput" class="upload-trigger">
-                    <span class="upload-icon">📹</span>
+                    <span class="upload-icon" aria-hidden="true">📹</span>
                     <span class="upload-text">Upload CCTV Video</span>
-                    <span class="upload-hint">(MP4 • Max 100MB)</span>
+                    <span class="upload-hint" id="upload-help">(MP4, MOV, AVI • Max 100MB)</span>
                 </label>
-                <div id="videoPreview" class="video-preview"></div>
+                <div id="videoPreview" class="video-preview" aria-live="polite"></div>
             </div>
 
             <div class="control-grid">
                 <div class="control-group">
-                    <label for="attackRate">Attack Rate</label>
+                    <label for="attackRate">Attack Probability</label>
                     <div class="slider-container">
-                        <input type="range" id="attackRate" min="0" max="1" step="0.01" value="0.25">
-                        <output id="attackRateValue">0.25</output>
+                        <input type="range" id="attackRate" min="0" max="1" step="0.01" value="0.25" 
+                               aria-valuetext="25%" aria-label="Attack probability slider">
+                        <output for="attackRate" id="attackRateValue">0.25</output>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label for="frameCount">Frame Count</label>
+                    <label for="frameCount">Analysis Frames</label>
                     <div class="slider-container">
-                        <input type="range" id="frameCount" min="16" max="128" step="8" value="64">
-                        <output id="frameCountValue">64</output>
+                        <input type="range" id="frameCount" min="16" max="128" step="8" value="64" 
+                               aria-valuetext="64 frames" aria-label="Frame count slider">
+                        <output for="frameCount" id="frameCountValue">64</output>
                     </div>
                 </div>
             </div>
-            <button id="analyzeBtn" class="analyze-btn" disabled>🚀 Analyze</button>
+
+            <button id="analyzeBtn" class="analyze-btn" disabled aria-live="polite">
+                <span class="btn-icon" aria-hidden="true">🚀</span>
+                <span class="btn-text">Initialize HIGHT Analysis</span>
+            </button>
         </section>
 
-        <nav class="tab-nav" role="tablist">
-            <button class="tab-btn active" data-tab="analysis">📊 Analysis</button>
-            <button class="tab-btn" data-tab="metrics">📈 Metrics</button>
-            <button class="tab-btn" data-tab="reports">📋 Reports</button>
+        <!-- Navigation -->
+        <nav class="tab-nav" role="tablist" aria-label="Analysis tabs">
+            <button class="tab-btn active" data-tab="analysis" role="tab" aria-selected="true" 
+                    aria-controls="analysis-panel" tabindex="0">
+                📊 Real-time Analysis
+            </button>
+            <button class="tab-btn" data-tab="metrics" role="tab" aria-selected="false" 
+                    aria-controls="metrics-panel" tabindex="-1">
+                📈 ML Performance
+            </button>
+            <button class="tab-btn" data-tab="reports" role="tab" aria-selected="false" 
+                    aria-controls="reports-panel" tabindex="-1">
+                📋 Classification Report
+            </button>
         </nav>
 
+        <!-- Tab Panels -->
         <main class="tab-panels">
-            <section id="analysis-panel" class="tab-panel active">
+            <!-- Analysis Panel -->
+            <section id="analysis-panel" class="tab-panel active" role="tabpanel" tabindex="0" 
+                     aria-labelledby="analysis-tab">
                 <div class="frame-compare">
                     <div class="frame-viewer">
-                        <h3>Input CCTV</h3>
-                        <canvas id="inputFrame" width="400" height="300"></canvas>
-                        <div class="frame-status">Frame: <output id="frameNum">1</output></div>
+                        <h3>📹 Input CCTV Frame</h3>
+                        <canvas id="inputFrame" width="400" height="300" 
+                                aria-label="Current input video frame"></canvas>
+                        <div class="frame-status" aria-live="polite">
+                            Frame: <output id="frameNum">1</output>/128
+                        </div>
                     </div>
                     <div class="frame-viewer">
-                        <h3>HIGHT Encrypted</h3>
-                        <canvas id="outputFrame" width="400" height="300"></canvas>
-                        <div class="frame-status">
-                            Hamming: <output id="hammingValue">0</output> | 
-                            Pred: <output id="predictionValue">Normal</output>
+                        <h3>🔐 HIGHT-32 Encrypted</h3>
+                        <canvas id="outputFrame" width="400" height="300" 
+                                aria-label="Current encrypted video frame"></canvas>
+                        <div class="frame-status" aria-live="polite">
+                            <span>Hamming: <output id="hammingValue">0</output></span>
+                            <span>Pred: <output id="predictionValue" class="prediction normal">NORMAL</output></span>
                         </div>
                     </div>
                 </div>
+
                 <div class="metrics-summary">
                     <div class="metric-card primary">
-                        <div id="overallAccuracy">98.4%</div>
-                        <div>Accuracy</div>
+                        <div class="metric-value" id="overallAccuracy" aria-live="polite">98.4%</div>
+                        <div class="metric-label">Classification Accuracy</div>
                     </div>
                     <div class="metric-card">
-                        <div id="normalFrames">62</div>
-                        <div>Normal</div>
+                        <div class="metric-value" id="normalFrames" aria-live="polite">62</div>
+                        <div class="metric-label">Normal Frames</div>
                     </div>
                     <div class="metric-card">
-                        <div id="attackFrames">2</div>
-                        <div>Attacks</div>
+                        <div class="metric-value" id="attackFrames" aria-live="polite">6</div>
+                        <div class="metric-label">Attack Frames</div>
                     </div>
                 </div>
-                <div id="realtimeChart" class="chart-container" style="height:450px;"></div>
+
+                <div class="chart-container">
+                    <h3>Real-time Hamming Distance Evolution</h3>
+                    <div id="realtimeChart" style="height:450px;"></div>
+                </div>
             </section>
 
-            <section id="metrics-panel" class="tab-panel">
+            <!-- Metrics Panel -->
+            <section id="metrics-panel" class="tab-panel" role="tabpanel" tabindex="0" 
+                     aria-labelledby="metrics-tab">
                 <div class="metrics-grid">
                     <div class="chart-container">
-                        <h4>Confusion Matrix</h4>
-                        <div id="confusionMatrix" style="height:350px;"></div>
+                        <h3>Confusion Matrix</h3>
+                        <div id="confusionMatrix" style="height:400px;"></div>
                     </div>
                     <div class="chart-container">
-                        <h4>Training Curves</h4>
-                        <div id="trainingCurves" style="height:350px;"></div>
+                        <h3>Training Curves</h3>
+                        <div id="trainingCurves" style="height:400px;"></div>
                     </div>
                     <div class="chart-container">
-                        <h4>Performance</h4>
-                        <div id="performanceMetrics" style="height:350px;"></div>
+                        <h3>Performance Metrics</h3>
+                        <div id="performanceMetrics" style="height:400px;"></div>
                     </div>
                 </div>
             </section>
 
-            <section id="reports-panel" class="tab-panel">
-                <div id="classificationReport"></div>
-                <a id="exportBtn" class="btn btn-secondary" style="display:none">📥 Export CSV</a>
+            <!-- Reports Panel -->
+            <section id="reports-panel" class="tab-panel" role="tabpanel" tabindex="0" 
+                     aria-labelledby="reports-tab">
+                <div id="classificationReport" aria-live="polite"></div>
+                <div class="report-actions">
+                    <a id="exportBtn" class="download-btn" style="display:none;" 
+                       download="vhads-report.csv" aria-label="Download analysis report">
+                        📥 Download Full Report (CSV)
+                    </a>
+                </div>
             </section>
         </main>
     </div>
 
-    <!-- LOAD ALL JS FILES SEQUENTIALLY -->
-    <script src="js/cipher.js"></script>
-    <script src="js/ml-models.js"></script>
-    <script src="js/video.js"></script>
+    <!-- JavaScript Modules (Global scope for Render Static) -->
+    <script src="js/hight-cipher.js"></script>
+    <script src="js/video-processor.js"></script>
+    <script src="js/vhads-model.js"></script>
     <script src="js/charts.js"></script>
     <script src="js/main.js"></script>
 </body>
