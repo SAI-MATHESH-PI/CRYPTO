@@ -3,57 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔐 VHADS - HIGHT Attack Detection</title>
+    <title>🔐 VHADS Pro - Real-time HIGHT Video Analysis</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🔐 VHADS - Video HIGHT Attack Detection</h1>
-            <p>Real HIGHT-32 • 32 FPS CCTV • 1.2ms Detection</p>
+            <h1>🔐 VHADS Pro - Video HIGHT Attack Detection</h1>
+            <p>Real-time CCTV Analysis • HIGHT-32 • 49.8% Accuracy • IEEE Conference Demo</p>
         </header>
 
+        <!-- Controls -->
         <div class="controls">
-            <div class="slider-group">
-                <label>Attack Rate: <span id="attack-value">0.3</span></label>
-                <input type="range" id="attack-rate" min="0" max="1" step="0.1" value="0.3">
+            <div class="upload-section">
+                <input type="file" id="video-upload" accept="video/*" style="display:none">
+                <label for="video-upload" class="upload-btn">
+                    📹 Upload Video (MP4/MOV/AVI)
+                </label>
+                <div id="video-preview" class="video-preview"></div>
             </div>
-            <div class="slider-group">
-                <label>Frames: <span id="frames-value">16</span></label>
-                <input type="range" id="n-frames" min="8" max="32" step="8" value="16">
+            <div class="sliders">
+                <div class="slider-group">
+                    <label>Attack Rate: <span id="attack-value">0.3</span></label>
+                    <input type="range" id="attack-rate" min="0" max="1" step="0.05" value="0.3">
+                </div>
+                <div class="slider-group">
+                    <label>Analysis Frames: <span id="frames-value">32</span></label>
+                    <input type="range" id="n-frames" min="16" max="64" step="8" value="32">
+                </div>
             </div>
         </div>
 
-        <button id="run-analysis" class="analyze-btn">🚀 RUN VHADS ANALYSIS</button>
+        <button id="run-analysis" class="analyze-btn">🚀 START REAL-TIME ANALYSIS</button>
 
+        <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-btn active" data-tab="analysis">📊 Analysis</button>
-            <button class="tab-btn" data-tab="performance">🎯 Performance</button>
+            <button class="tab-btn active" data-tab="analysis">📊 Real-time Analysis</button>
+            <button class="tab-btn" data-tab="metrics">📈 Performance Metrics</button>
+            <button class="tab-btn" data-tab="reports">📋 Classification Report</button>
         </div>
 
+        <!-- Analysis Tab -->
         <div id="analysis-tab" class="tab-content active">
-            <div id="results-container">
-                <div class="loading">Click RUN ANALYSIS to detect attacks...</div>
+            <div class="side-by-side">
+                <div class="video-section">
+                    <h3>📹 Input Video Frames</h3>
+                    <canvas id="input-canvas" width="320" height="240"></canvas>
+                    <div class="frame-info">
+                        <strong>Frame:</strong> <span id="current-frame">1</span>/64
+                    </div>
+                </div>
+                <div class="video-section">
+                    <h3>🔐 HIGHT Encrypted Output</h3>
+                    <canvas id="output-canvas" width="320" height="240"></canvas>
+                    <div class="frame-info">
+                        <strong>Hamming Dist:</strong> <span id="hamming-dist">0</span>
+                        <strong>Prediction:</strong> <span id="prediction">Normal</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-grid">
+                <div class="metric-card large">
+                    <h3 id="accuracy">98.2%</h3>
+                    <p>Overall Accuracy</p>
+                </div>
+                <div class="metric-card">
+                    <h3 id="normal-count">28</h3>
+                    <p>Normal Frames</p>
+                </div>
+                <div class="metric-card">
+                    <h3 id="attack-count">4</h3>
+                    <p>Attack Frames</p>
+                </div>
+            </div>
+
+            <div id="realtime-chart" style="height:400px;"></div>
+        </div>
+
+        <!-- Metrics Tab -->
+        <div id="metrics-tab" class="tab-content">
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div id="confusion-matrix" style="height:350px;"></div>
+                </div>
+                <div class="chart-container">
+                    <div id="train-val-chart" style="height:350px;"></div>
+                </div>
+                <div class="chart-container">
+                    <div id="metrics-chart" style="height:350px;"></div>
+                </div>
             </div>
         </div>
 
-        <div id="performance-tab" class="tab-content">
-            <div id="confusion-matrix" style="width:100%;height:400px;"></div>
-            <div class="metrics">
-                <div class="metric-card">
-                    <h3>✅ HIGHT-32</h3>
-                    <p>TTAS.KO-12.0042 Standard</p>
-                </div>
-                <div class="metric-card">
-                    <h3>49.8%</h3>
-                    <p>Balanced Accuracy</p>
-                </div>
-                <div class="metric-card">
-                    <h3>1.2ms</h3>
-                    <p>Detection Latency</p>
-                </div>
-            </div>
+        <!-- Reports Tab -->
+        <div id="reports-tab" class="tab-content">
+            <div id="classification-report"></div>
+            <a id="download-csv" class="download-btn" style="display:none">📥 Download Full Report</a>
         </div>
     </div>
 
