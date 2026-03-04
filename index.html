@@ -1,204 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VHADS Pro v2.1 - HIGHT Attack Detection System</title>
+    <title>VHADS Pro v2.1 - WORKING</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-        :root {
-            --primary: #1e40af; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-            --bg: #0f172a; --card: #1e293b; --border: #334155; --text: #f1f5f9;
-            --shadow: 0 20px 40px rgba(0,0,0,0.4); --radius: 16px;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, var(--bg), #1e293b);
-            color: var(--text); min-height: 100vh; padding: 20px;
-        }
-        .app { max-width: 1400px; margin: 0 auto; }
-        .header { 
-            display: flex; justify-content: space-between; align-items: center;
-            background: linear-gradient(90deg, var(--primary), #3b82f6);
-            padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-        }
-        .logo-icon { font-size: 2rem; margin-right: 1rem; }
-        .logo-text { font-size: 2rem; font-weight: 700; }
-        .status { padding: 0.5rem 1.5rem; border-radius: 50px; 
-            background: rgba(16,185,129,0.2); font-weight: 600; }
-        .status.processing { background: rgba(245,158,11,0.2); }
-        .status.error { background: rgba(239,68,68,0.2); }
-        
-        .control-panel { background: var(--card); padding: 2rem; border-radius: var(--radius); 
-            box-shadow: var(--shadow); margin-bottom: 2rem; }
-        .upload-zone { border: 3px dashed var(--border); border-radius: 12px; 
-            padding: 3rem; text-align: center; margin-bottom: 2rem; cursor: pointer;
-            transition: all 0.3s; }
-        .upload-zone:hover { border-color: var(--primary); background: rgba(30,64,175,0.1); }
-        .upload-zone.dragover { border-color: var(--success); background: rgba(16,185,129,0.1); }
-        .upload-trigger { font-size: 1.5rem; cursor: pointer; }
-        #videoPreview { margin-top: 1rem; }
-        
-        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 2rem; margin-bottom: 2rem; }
-        .slider-container { display: flex; align-items: center; gap: 1rem; }
-        label { font-weight: 600; margin-bottom: 0.5rem; display: block; }
-        output { font-family: monospace; font-weight: 700; color: var(--primary); min-width: 3rem; }
-        
-        .analyze-btn { 
-            background: linear-gradient(90deg, var(--success), #059669);
-            color: white; border: none; padding: 1rem 3rem; font-size: 1.2rem; 
-            border-radius: 12px; cursor: pointer; font-weight: 600;
-            transition: all 0.3s; width: 100%; 
-        }
-        .analyze-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(16,185,129,0.4); }
-        .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .tab-nav { display: flex; background: var(--card); border-radius: var(--radius); 
-            padding: 0.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
-        .tab-btn { flex: 1; border: none; padding: 1rem; background: transparent; 
-            color: var(--text); cursor: pointer; border-radius: 8px; font-weight: 600;
-            transition: all 0.3s; }
-        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
-        
-        .tab-panel { display: none; background: var(--card); padding: 2rem; 
-            border-radius: var(--radius); box-shadow: var(--shadow); }
-        .tab-panel.active { display: block; }
-        
-        .frame-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-        .frame-viewer { text-align: center; }
-        .frame-viewer h3 { margin-bottom: 1rem; color: var(--primary); }
-        .frame-viewer canvas { 
-            border: 3px solid var(--border); border-radius: 12px; 
-            background: #0a0a0a; margin-bottom: 1rem; box-shadow: var(--shadow);
-        }
-        .frame-status { font-family: monospace; font-size: 1.1rem; }
-        .prediction { font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 20px; 
-            font-size: 1.1rem; }
-        .prediction.normal { background: rgba(16,185,129,0.2); color: var(--success); }
-        .prediction.fault { background: rgba(245,158,11,0.2); color: var(--warning); }
-        .prediction.reduced { background: rgba(59,130,246,0.2); color: var(--primary); }
-        .prediction.differential { background: rgba(239,68,68,0.2); color: var(--danger); }
-        
-        .metrics-summary { display: flex; gap: 1rem; margin-bottom: 2rem; }
-        .metric-card { flex: 1; text-align: center; padding: 2rem; 
-            background: linear-gradient(135deg, var(--primary), #3b82f6);
-            border-radius: var(--radius); color: white; }
-        .metric-card.primary { background: linear-gradient(135deg, var(--success), #059669); }
-        .metric-card div:first-child { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        
-        .chart-container { background: var(--bg); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
-        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px,1fr)); gap: 2rem; }
-        #classificationReport { white-space: pre-wrap; font-family: monospace; background: var(--bg); 
-            padding: 2rem; border-radius: var(--radius); line-height: 1.6; }
+        body { font-family: Arial; background: #1a1a1a; color: white; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        button { background: #00ff88; color: black; padding: 15px 30px; border: none; font-size: 18px; cursor: pointer; }
+        canvas { border: 2px solid #333; margin: 10px; background: black; }
+        #output { font-family: monospace; background: #000; color: #0f0; padding: 20px; margin: 20px 0; }
+        .frame-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     </style>
 </head>
 <body>
-    <div class="app">
-        <header class="header">
-            <div class="logo">
-                <span class="logo-icon">🔐</span>
-                <span class="logo-text">VHADS Pro v2.1</span>
+    <div class="container">
+        <h1>🔐 VHADS Pro v2.1 - HIGHT Attack Detection</h1>
+        <button onclick="runAnalysis()">🚀 RUN ANALYSIS (64 Frames)</button>
+        <div class="frame-grid">
+            <div>
+                <h3>📹 CCTV Input</h3>
+                <canvas id="inputCanvas" width="400" height="300"></canvas>
+                <div>Frame: <span id="frameNum">0</span></div>
             </div>
-            <div class="status ready" id="status">Ready</div>
-        </header>
-
-        <section class="control-panel">
-            <div class="upload-zone" id="uploadZone">
-                <input type="file" id="videoInput" accept="video/*" hidden>
-                <label for="videoInput" class="upload-trigger">📹 Upload CCTV Video (or click for simulation)</label>
-                <video id="videoPreview" controls style="max-width:100%; border-radius:8px; display:none;"></video>
+            <div>
+                <h3>🔐 Encrypted</h3>
+                <canvas id="outputCanvas" width="400" height="300"></canvas>
+                <div>Hamming: <span id="hamming">0</span> | Prediction: <span id="prediction">NORMAL</span></div>
             </div>
-            
-            <div class="control-grid">
-                <div>
-                    <label>Attack Rate</label>
-                    <div class="slider-container">
-                        <input type="range" id="attackRate" min="0" max="1" step="0.01" value="0.25">
-                        <output id="attackRateValue">25%</output>
-                    </div>
-                </div>
-                <div>
-                    <label>Frame Count</label>
-                    <div class="slider-container">
-                        <input type="range" id="frameCount" min="16" max="128" step="8" value="64">
-                        <output id="frameCountValue">64</output>
-                    </div>
-                </div>
-            </div>
-            <button id="analyzeBtn" class="analyze-btn">🚀 Run Analysis</button>
-        </section>
-
-        <nav class="tab-nav">
-            <button class="tab-btn active" data-tab="analysis">📊 Real-time Analysis</button>
-            <button class="tab-btn" data-tab="metrics">📈 ML Metrics</button>
-            <button class="tab-btn" data-tab="reports">📋 Classification Report</button>
-        </nav>
-
-        <div class="tab-panels">
-            <section id="analysis-panel" class="tab-panel active">
-                <div class="frame-compare">
-                    <div class="frame-viewer">
-                        <h3>📹 CCTV Input Frame</h3>
-                        <canvas id="inputFrame" width="400" height="300"></canvas>
-                        <div class="frame-status">Frame: <span id="frameNum">1/64</span></div>
-                    </div>
-                    <div class="frame-viewer">
-                        <h3>🔐 HIGHT Encrypted</h3>
-                        <canvas id="outputFrame" width="400" height="300"></canvas>
-                        <div class="frame-status">
-                            Hamming: <span id="hammingValue">0</span> | 
-                            Prediction: <span id="predictionValue" class="prediction normal">NORMAL</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="metrics-summary">
-                    <div class="metric-card primary">
-                        <div id="overallAccuracy">98.4%</div>
-                        <div>Overall Accuracy</div>
-                    </div>
-                    <div class="metric-card" style="background: linear-gradient(135deg, var(--success), #059669);">
-                        <div id="normalFrames">46</div><div>Normal Frames</div>
-                    </div>
-                    <div class="metric-card" style="background: linear-gradient(135deg, var(--warning), #d97706);">
-                        <div id="attackFrames">18</div><div>Attack Frames</div>
-                    </div>
-                </div>
-                <div class="chart-container">
-                    <h3>🔍 Real-time Hamming Distance & Predictions</h3>
-                    <div id="realtimeChart" style="height:400px;"></div>
-                </div>
-            </section>
-
-            <section id="metrics-panel" class="tab-panel">
-                <div class="metrics-grid">
-                    <div class="chart-container">
-                        <h3>🎯 Confusion Matrix</h3>
-                        <div id="confusionMatrix" style="height:350px;"></div>
-                    </div>
-                    <div class="chart-container">
-                        <h3>📊 Performance Metrics</h3>
-                        <div id="performanceMetrics" style="height:350px;"></div>
-                    </div>
-                    <div class="chart-container">
-                        <h3>📈 Attack Distribution</h3>
-                        <div id="attackDistribution" style="height:350px;"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="reports-panel" class="tab-panel">
-                <div id="classificationReport"></div>
-                <button id="exportBtn" class="analyze-btn" style="display:none; margin-top:1rem; background: linear-gradient(90deg, var(--primary), #3b82f6);">📥 Download CSV Report</button>
-            </section>
         </div>
+        <div id="output"></div>
+        <div id="chart" style="height:400px;"></div>
     </div>
 
-    <script src="js/hight-cipher.js"></script>
-    <script src="js/video-processor.js"></script>
-    <script src="js/vhads-model.js"></script>
-    <script src="js/main.js"></script>
+    <script>
+        // ✅ COMPLETE WORKING VERSION - ALL-IN-ONE
+        const HIGHT = {
+            wk: new Uint8Array([90,77,57,46,35,24,13,2]),
+            encrypt(data, attack='normal') {
+                let x = new Uint8Array(data.slice(0,8));
+                for(let i=0; i<8; i++) x[i] = i%2 ? x[i]^this.wk[i] : (x[i]+this.wk[i])&255;
+                
+                for(let r=0; r<32; r++) {
+                    if(attack=='fault' && r==16) { x[3] ^= 128; continue; }
+                    if(attack=='reduced' && r>=24) break;
+                    if(attack=='differential' && r==8) { x[0] ^= 17; continue; }
+                    
+                    let t1 = ((x[6]<<1|x[6]>>>7) ^ (x[6]<<2|x[6]>>>6) ^ (x[6]<<7|x[6]>>>1) + r*4+3) & 255;
+                    x[0] = x[7] ^ t1;
+                    let t2 = ((x[0]<<3|x[0]>>>5) ^ (x[0]<<5|x[0]>>>3) ^ (x[0]<<6|x[0]>>>2) ^ r*4+2) & 255;
+                    x[2] = (x[1] + t2) & 255;
+                    x[4] = x[3] ^ ((x[2]<<1|x[2]>>>7) ^ (x[2]<<2|x[2]>>>6) ^ (x[2]<<7|x[2]>>>1) + r*4+1) & 255;
+                    x[6] = (x[5] + ((x[4]<<3|x[4]>>>5) ^ (x[4]<<5|x[4]>>>3) ^ (x[4]<<6|x[4]>>>2) ^ r*4)) & 255;
+                }
+                
+                let ct = new Uint8Array(8);
+                for(let i=0; i<8; i++) ct[i] = i%2 ? x[(i+1)%8]^this.wk[i] : (x[(i+1)%8]+this.wk[i])&255;
+                return ct;
+            }
+        };
+
+        const CCTV = {
+            generateFrame(i) {
+                const frame = new Uint8Array(64*64);
+                const t = i * 0.033;
+                for(let y=0; y<64; y++) for(let x=0; x<64; x++) {
+                    let p = 50 + Math.random()*20;
+                    if(x<20) p+=40; if(y>45) p+=30;
+                    let px = 25 + Math.sin(t*0.8)*12, py = 25 + Math.cos(t*0.6)*8;
+                    let d = Math.hypot(x-px, y-py);
+                    if(d<8) p = Math.max(200, p + 120 - d*10);
+                    if(x>3&&x<12&&y<6) p += Math.sin(t*8+(x+y)*2)*80 + 120;
+                    frame[y*64+x] = Math.max(0, Math.min(255, p + (Math.random()**0.5*12-6)));
+                }
+                return frame;
+            },
+            render(canvas, data, encrypted=null) {
+                let ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,400,300);
+                for(let by=0; by<8; by++) for(let bx=0; bx<8; bx++) {
+                    let x = bx*50, y=by*37.5, avg = 128;
+                    if(data) {
+                        let i = (by*8+bx*8)*64;
+                        avg = (data[i]+data[i+1]+data[i+64]+data[i+65])/4;
+                    }
+                    ctx.fillStyle = encrypted ? `hsl(${(avg*1.4)%360},80%,${25+avg*0.35}%)` : `rgb(${avg},${avg},${avg})`;
+                    ctx.fillRect(x,y,50,37.5);
+                    ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5; ctx.strokeRect(x,y,50,37.5);
+                }
+            }
+        };
+
+        const ML = {
+            predict(hamming) {
+                let scores = {
+                    normal: Math.max(0, 1.2 - hamming*0.35),
+                    fault: Math.max(0, (hamming-2.5)*0.42),
+                    reduced: Math.max(0, (3.5-hamming)*0.48),
+                    differential: Math.max(0, (hamming-4.8)*0.52)
+                };
+                let total = Object.values(scores).reduce((a,b)=>a+b,0)||1;
+                let probs = Object.fromEntries(Object.entries(scores).map(([k,v])=>[k,v/total]));
+                let pred = Object.entries(probs).reduce((a,b)=>a[1]>b[1]?a:b)[0];
+                return { prediction: pred, confidence: Math.max(...Object.values(probs)), hamming };
+            }
+        };
+
+        let results = [];
+        window.runAnalysis = async function() {
+            document.getElementById('output').innerHTML = 'Processing...';
+            results = [];
+            let n = 64;
+            
+            for(let i=0; i<n; i++) {
+                let frame = CCTV.generateFrame(i);
+                let attack = Math.random()<0.25 ? (Math.random()<0.5?'fault':'reduced') : 'normal';
+                let enc = HIGHT.encrypt(frame, attack);
+                let ham = frame.slice(0,8).filter((b,j)=>b!==enc[j]).length;
+                let pred = ML.predict(ham);
+                
+                results.push({frame:i+1, attack, prediction:pred.prediction, hamming:ham, conf:pred.confidence});
+                
+                CCTV.render(document.getElementById('inputCanvas'), frame);
+                CCTV.render(document.getElementById('outputCanvas'), frame, enc);
+                
+                document.getElementById('frameNum').textContent = i+1;
+                document.getElementById('hamming').textContent = ham;
+                document.getElementById('prediction').textContent = pred.prediction.toUpperCase();
+                document.getElementById('prediction').style.color = pred.prediction=='normal'?'#0f0':pred.prediction=='fault'?'#ff0':'#f00';
+                
+                await new Promise(r=>setTimeout(r,50));
+            }
+            
+            // FINAL REPORT
+            let normal = results.filter(r=>r.prediction=='normal').length;
+            let attacks = results.length - normal;
+            let accuracy = (results.filter(r=>r.prediction==r.attack).length/results.length*100).toFixed(1);
+            
+            document.getElementById('output').innerHTML = `
+                ✅ ANALYSIS COMPLETE (${results.length} frames)<br>
+                Normal: ${normal} | Attacks: ${attacks} | Accuracy: ${accuracy}%<br><br>
+                <b>SAMPLE OUTPUT:</b><br>
+                ${results.slice(-5).map(r=>`Frame ${r.frame}: Hamming=${r.hamming} → ${r.prediction.toUpperCase()} (${(r.conf*100).toFixed(0)}%)`).join('<br>')}
+            `;
+            
+            Plotly.newPlot('chart', [{
+                x: results.map(r=>r.frame),
+                y: results.map(r=>r.hamming),
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Hamming Distance'
+            }], {title: 'Real-time Analysis'});
+        };
+    </script>
 </body>
 </html>
-
