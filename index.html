@@ -3,167 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VHADS Pro v2.0 - HIGHT Attack Detection System</title>
+    <title>VHADS Pro v2.1 - HIGHT Attack Detection System</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <link rel="stylesheet" href="css/vhads.css">
+    <style>
+        :root {
+            --primary: #1e40af; --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --bg: #0f172a; --card: #1e293b; --border: #334155; --text: #f1f5f9;
+            --shadow: 0 20px 40px rgba(0,0,0,0.4); --radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--bg), #1e293b);
+            color: var(--text); min-height: 100vh; padding: 20px;
+        }
+        .app { max-width: 1400px; margin: 0 auto; }
+        .header { 
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(90deg, var(--primary), #3b82f6);
+            padding: 2rem; border-radius: var(--radius); margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        .logo-icon { font-size: 2rem; margin-right: 1rem; }
+        .logo-text { font-size: 2rem; font-weight: 700; }
+        .status { padding: 0.5rem 1.5rem; border-radius: 50px; 
+            background: rgba(16,185,129,0.2); font-weight: 600; }
+        .status.processing { background: rgba(245,158,11,0.2); }
+        .status.error { background: rgba(239,68,68,0.2); }
+        
+        .control-panel { background: var(--card); padding: 2rem; border-radius: var(--radius); 
+            box-shadow: var(--shadow); margin-bottom: 2rem; }
+        .upload-zone { border: 3px dashed var(--border); border-radius: 12px; 
+            padding: 3rem; text-align: center; margin-bottom: 2rem; cursor: pointer;
+            transition: all 0.3s; }
+        .upload-zone:hover { border-color: var(--primary); background: rgba(30,64,175,0.1); }
+        .upload-zone.dragover { border-color: var(--success); background: rgba(16,185,129,0.1); }
+        .upload-trigger { font-size: 1.5rem; cursor: pointer; }
+        #videoPreview { margin-top: 1rem; }
+        
+        .control-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 2rem; margin-bottom: 2rem; }
+        .slider-container { display: flex; align-items: center; gap: 1rem; }
+        label { font-weight: 600; margin-bottom: 0.5rem; display: block; }
+        output { font-family: monospace; font-weight: 700; color: var(--primary); min-width: 3rem; }
+        
+        .analyze-btn { 
+            background: linear-gradient(90deg, var(--success), #059669);
+            color: white; border: none; padding: 1rem 3rem; font-size: 1.2rem; 
+            border-radius: 12px; cursor: pointer; font-weight: 600;
+            transition: all 0.3s; width: 100%; 
+        }
+        .analyze-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(16,185,129,0.4); }
+        .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .tab-nav { display: flex; background: var(--card); border-radius: var(--radius); 
+            padding: 0.5rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
+        .tab-btn { flex: 1; border: none; padding: 1rem; background: transparent; 
+            color: var(--text); cursor: pointer; border-radius: 8px; font-weight: 600;
+            transition: all 0.3s; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primary); color: white; }
+        
+        .tab-panel { display: none; background: var(--card); padding: 2rem; 
+            border-radius: var(--radius); box-shadow: var(--shadow); }
+        .tab-panel.active { display: block; }
+        
+        .frame-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .frame-viewer { text-align: center; }
+        .frame-viewer h3 { margin-bottom: 1rem; color: var(--primary); }
+        .frame-viewer canvas { 
+            border: 3px solid var(--border); border-radius: 12px; 
+            background: #0a0a0a; margin-bottom: 1rem; box-shadow: var(--shadow);
+        }
+        .frame-status { font-family: monospace; font-size: 1.1rem; }
+        .prediction { font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 20px; 
+            font-size: 1.1rem; }
+        .prediction.normal { background: rgba(16,185,129,0.2); color: var(--success); }
+        .prediction.fault { background: rgba(245,158,11,0.2); color: var(--warning); }
+        .prediction.reduced { background: rgba(59,130,246,0.2); color: var(--primary); }
+        .prediction.differential { background: rgba(239,68,68,0.2); color: var(--danger); }
+        
+        .metrics-summary { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .metric-card { flex: 1; text-align: center; padding: 2rem; 
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            border-radius: var(--radius); color: white; }
+        .metric-card.primary { background: linear-gradient(135deg, var(--success), #059669); }
+        .metric-card div:first-child { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        
+        .chart-container { background: var(--bg); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px,1fr)); gap: 2rem; }
+        #classificationReport { white-space: pre-wrap; font-family: monospace; background: var(--bg); 
+            padding: 2rem; border-radius: var(--radius); line-height: 1.6; }
+    </style>
 </head>
 <body>
-    <div class="app" role="main" aria-label="VHADS Pro Dashboard">
-        <!-- Header -->
-        <header class="app-header" role="banner">
-            <div class="header-content">
-                <div class="logo">
-                    <span class="logo-icon" aria-hidden="true">🔐</span>
-                    <h1 class="logo-text sr-only">VHADS Pro v2.0</h1>
-                </div>
-                <div class="header-meta">
-                    <span class="version">v2.0.2</span>
-                    <span class="status ready" id="status" data-status="ready" role="status" aria-live="polite">
-                        Ready for Analysis
-                    </span>
-                </div>
+    <div class="app">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">🔐</span>
+                <span class="logo-text">VHADS Pro v2.1</span>
             </div>
+            <div class="status ready" id="status">Ready</div>
         </header>
 
-        <!-- Controls -->
-        <section class="control-panel" aria-labelledby="controls-heading">
-            <h2 id="controls-heading" class="sr-only">Analysis Controls</h2>
+        <section class="control-panel">
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="videoInput" accept="video/*" hidden>
+                <label for="videoInput" class="upload-trigger">📹 Upload CCTV Video (or click for simulation)</label>
+                <video id="videoPreview" controls style="max-width:100%; border-radius:8px; display:none;"></video>
+            </div>
             
-            <div class="upload-zone" id="uploadZone" role="region" aria-label="Video Upload">
-                <input type="file" id="videoInput" accept="video/*" hidden aria-describedby="upload-help">
-                <label for="videoInput" class="upload-trigger">
-                    <span class="upload-icon" aria-hidden="true">📹</span>
-                    <span class="upload-text">Upload CCTV Video</span>
-                    <span class="upload-hint" id="upload-help">(MP4, MOV, AVI • Max 100MB)</span>
-                </label>
-                <div id="videoPreview" class="video-preview" aria-live="polite"></div>
-            </div>
-
             <div class="control-grid">
-                <div class="control-group">
-                    <label for="attackRate">Attack Probability</label>
+                <div>
+                    <label>Attack Rate</label>
                     <div class="slider-container">
-                        <input type="range" id="attackRate" min="0" max="1" step="0.01" value="0.25" 
-                               aria-valuetext="25%" aria-label="Attack probability slider">
-                        <output for="attackRate" id="attackRateValue">0.25</output>
+                        <input type="range" id="attackRate" min="0" max="1" step="0.01" value="0.25">
+                        <output id="attackRateValue">25%</output>
                     </div>
                 </div>
-                <div class="control-group">
-                    <label for="frameCount">Analysis Frames</label>
+                <div>
+                    <label>Frame Count</label>
                     <div class="slider-container">
-                        <input type="range" id="frameCount" min="16" max="128" step="8" value="64" 
-                               aria-valuetext="64 frames" aria-label="Frame count slider">
-                        <output for="frameCount" id="frameCountValue">64</output>
+                        <input type="range" id="frameCount" min="16" max="128" step="8" value="64">
+                        <output id="frameCountValue">64</output>
                     </div>
                 </div>
             </div>
-
-            <button id="analyzeBtn" class="analyze-btn" disabled aria-live="polite">
-                <span class="btn-icon" aria-hidden="true">🚀</span>
-                <span class="btn-text">Initialize HIGHT Analysis</span>
-            </button>
+            <button id="analyzeBtn" class="analyze-btn">🚀 Run Analysis</button>
         </section>
 
-        <!-- Navigation -->
-        <nav class="tab-nav" role="tablist" aria-label="Analysis tabs">
-            <button class="tab-btn active" data-tab="analysis" role="tab" aria-selected="true" 
-                    aria-controls="analysis-panel" tabindex="0">
-                📊 Real-time Analysis
-            </button>
-            <button class="tab-btn" data-tab="metrics" role="tab" aria-selected="false" 
-                    aria-controls="metrics-panel" tabindex="-1">
-                📈 ML Performance
-            </button>
-            <button class="tab-btn" data-tab="reports" role="tab" aria-selected="false" 
-                    aria-controls="reports-panel" tabindex="-1">
-                📋 Classification Report
-            </button>
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="analysis">📊 Real-time Analysis</button>
+            <button class="tab-btn" data-tab="metrics">📈 ML Metrics</button>
+            <button class="tab-btn" data-tab="reports">📋 Classification Report</button>
         </nav>
 
-        <!-- Tab Panels -->
-        <main class="tab-panels">
-            <!-- Analysis Panel -->
-            <section id="analysis-panel" class="tab-panel active" role="tabpanel" tabindex="0" 
-                     aria-labelledby="analysis-tab">
+        <div class="tab-panels">
+            <section id="analysis-panel" class="tab-panel active">
                 <div class="frame-compare">
                     <div class="frame-viewer">
-                        <h3>📹 Input CCTV Frame</h3>
-                        <canvas id="inputFrame" width="400" height="300" 
-                                aria-label="Current input video frame"></canvas>
-                        <div class="frame-status" aria-live="polite">
-                            Frame: <output id="frameNum">1</output>/128
-                        </div>
+                        <h3>📹 CCTV Input Frame</h3>
+                        <canvas id="inputFrame" width="400" height="300"></canvas>
+                        <div class="frame-status">Frame: <span id="frameNum">1/64</span></div>
                     </div>
                     <div class="frame-viewer">
-                        <h3>🔐 HIGHT-32 Encrypted</h3>
-                        <canvas id="outputFrame" width="400" height="300" 
-                                aria-label="Current encrypted video frame"></canvas>
-                        <div class="frame-status" aria-live="polite">
-                            <span>Hamming: <output id="hammingValue">0</output></span>
-                            <span>Pred: <output id="predictionValue" class="prediction normal">NORMAL</output></span>
+                        <h3>🔐 HIGHT Encrypted</h3>
+                        <canvas id="outputFrame" width="400" height="300"></canvas>
+                        <div class="frame-status">
+                            Hamming: <span id="hammingValue">0</span> | 
+                            Prediction: <span id="predictionValue" class="prediction normal">NORMAL</span>
                         </div>
                     </div>
                 </div>
-
                 <div class="metrics-summary">
                     <div class="metric-card primary">
-                        <div class="metric-value" id="overallAccuracy" aria-live="polite">98.4%</div>
-                        <div class="metric-label">Classification Accuracy</div>
+                        <div id="overallAccuracy">98.4%</div>
+                        <div>Overall Accuracy</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="normalFrames" aria-live="polite">62</div>
-                        <div class="metric-label">Normal Frames</div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, var(--success), #059669);">
+                        <div id="normalFrames">46</div><div>Normal Frames</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-value" id="attackFrames" aria-live="polite">6</div>
-                        <div class="metric-label">Attack Frames</div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, var(--warning), #d97706);">
+                        <div id="attackFrames">18</div><div>Attack Frames</div>
                     </div>
                 </div>
-
                 <div class="chart-container">
-                    <h3>Real-time Hamming Distance Evolution</h3>
-                    <div id="realtimeChart" style="height:450px;"></div>
+                    <h3>🔍 Real-time Hamming Distance & Predictions</h3>
+                    <div id="realtimeChart" style="height:400px;"></div>
                 </div>
             </section>
 
-            <!-- Metrics Panel -->
-            <section id="metrics-panel" class="tab-panel" role="tabpanel" tabindex="0" 
-                     aria-labelledby="metrics-tab">
+            <section id="metrics-panel" class="tab-panel">
                 <div class="metrics-grid">
                     <div class="chart-container">
-                        <h3>Confusion Matrix</h3>
-                        <div id="confusionMatrix" style="height:400px;"></div>
+                        <h3>🎯 Confusion Matrix</h3>
+                        <div id="confusionMatrix" style="height:350px;"></div>
                     </div>
                     <div class="chart-container">
-                        <h3>Training Curves</h3>
-                        <div id="trainingCurves" style="height:400px;"></div>
+                        <h3>📊 Performance Metrics</h3>
+                        <div id="performanceMetrics" style="height:350px;"></div>
                     </div>
                     <div class="chart-container">
-                        <h3>Performance Metrics</h3>
-                        <div id="performanceMetrics" style="height:400px;"></div>
+                        <h3>📈 Attack Distribution</h3>
+                        <div id="attackDistribution" style="height:350px;"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Reports Panel -->
-            <section id="reports-panel" class="tab-panel" role="tabpanel" tabindex="0" 
-                     aria-labelledby="reports-tab">
-                <div id="classificationReport" aria-live="polite"></div>
-                <div class="report-actions">
-                    <a id="exportBtn" class="download-btn" style="display:none;" 
-                       download="vhads-report.csv" aria-label="Download analysis report">
-                        📥 Download Full Report (CSV)
-                    </a>
-                </div>
+            <section id="reports-panel" class="tab-panel">
+                <div id="classificationReport"></div>
+                <button id="exportBtn" class="analyze-btn" style="display:none; margin-top:1rem; background: linear-gradient(90deg, var(--primary), #3b82f6);">📥 Download CSV Report</button>
             </section>
-        </main>
+        </div>
     </div>
 
-    <!-- JavaScript Modules (Global scope for Render Static) -->
     <script src="js/hight-cipher.js"></script>
     <script src="js/video-processor.js"></script>
     <script src="js/vhads-model.js"></script>
-    <script src="js/charts.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
+
