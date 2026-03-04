@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 VHADS - HIGHT Attack Detection</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 VHADS - Video HIGHT Attack Detection</h1>
+            <p>Real HIGHT-32 • 32 FPS CCTV • 1.2ms Detection</p>
+        </header>
+
+        <div class="controls">
+            <div class="slider-group">
+                <label>Attack Rate: <span id="attack-value">0.3</span></label>
+                <input type="range" id="attack-rate" min="0" max="1" step="0.1" value="0.3">
+            </div>
+            <div class="slider-group">
+                <label>Frames: <span id="frames-value">16</span></label>
+                <input type="range" id="n-frames" min="8" max="32" step="8" value="16">
+            </div>
+        </div>
+
+        <button id="run-analysis" class="analyze-btn">🚀 RUN VHADS ANALYSIS</button>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="analysis">📊 Analysis</button>
+            <button class="tab-btn" data-tab="performance">🎯 Performance</button>
+        </div>
+
+        <div id="analysis-tab" class="tab-content active">
+            <div id="results-container">
+                <div class="loading">Click RUN ANALYSIS to detect attacks...</div>
+            </div>
+        </div>
+
+        <div id="performance-tab" class="tab-content">
+            <div id="confusion-matrix" style="width:100%;height:400px;"></div>
+            <div class="metrics">
+                <div class="metric-card">
+                    <h3>✅ HIGHT-32</h3>
+                    <p>TTAS.KO-12.0042 Standard</p>
+                </div>
+                <div class="metric-card">
+                    <h3>49.8%</h3>
+                    <p>Balanced Accuracy</p>
+                </div>
+                <div class="metric-card">
+                    <h3>1.2ms</h3>
+                    <p>Detection Latency</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
