@@ -1,342 +1,241 @@
-// VHADS Pro v2.0 - Main Application Orchestrator
-// Production-grade error handling + real-time processing
+// VHADS Pro v2.1 - MAIN PRODUCTION PIPELINE
 class VHADSApp {
     constructor() {
-        this.state = {
-            results: [],
-            isAnalyzing: false,
-            videoFile: null
-        };
-        
+        this.results = [];
+        this.currentFrame = 0;
+        this.chartData = { hamming: [], predictions: [], times: [] };
         this.init();
     }
     
-    async init() {
-        try {
-            // Initialize charts first
-            await Charts.init();
-            
-            // Bind all event listeners
-            this.bindEvents();
-            
-            // Update initial UI state
-            this.updateControls();
-            
-            console.log('✅ VHADS Pro v2.0 initialized successfully');
-        } catch (error) {
-            console.error('VHADS initialization failed:', error);
-            this.showError('Application initialization failed. Please refresh.');
-        }
+    init() {
+        this.bindEvents();
+        this.updateSliders();
+        console.log('🚀 VHADS Pro v2.1 Initialized');
     }
     
     bindEvents() {
-        // Video upload
-        document.getElementById('videoInput').addEventListener('change', (e) => {
-            this.handleVideoUpload(e.target.files[0]);
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const uploadZone = document.getElementById('uploadZone');
+        const videoInput = document.getElementById('videoInput');
+        
+        analyzeBtn.addEventListener('click', () => this.runAnalysis());
+        
+        // Drag & drop video upload
+        uploadZone.addEventListener('click', () => videoInput.click());
+        uploadZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if(files.length) this.handleVideoUpload(files[0]);
+        });
+        videoInput.addEventListener('change', e => {
+            if(e.target.files[0]) this.handleVideoUpload(e.target.files[0]);
         });
         
-        // Control sliders
-        ['attackRate', 'frameCount'].forEach(id => {
-            document.getElementById(id).addEventListener('input', (e) => {
-                this.state[e.target.id] = parseFloat(e.target.value);
-                document.getElementById(`${id}Value`).textContent = e.target.value;
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                e.target.classList.add('active');
+                document.getElementById(e.target.dataset.tab + '-panel').classList.add('active');
             });
         });
         
-        // Analyze button
-        document.getElementById('analyzeBtn').addEventListener('click', () => {
-            this.runAnalysis();
-        });
-        
-        // Tab navigation (keyboard accessible)
-        document.querySelectorAll('.tab-btn').forEach((btn, index) => {
-            btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
-            btn.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.switchTab(e.target.dataset.tab);
-                }
-            });
-        });
-        
-        // Keyboard navigation for tabs
-        document.addEventListener('keydown', (e) => {
-            const activeTab = document.querySelector('.tab-btn[aria-selected="true"]');
-            const tabs = document.querySelectorAll('.tab-btn');
-            let currentIndex = Array.from(tabs).indexOf(activeTab);
-            
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                const nextIndex = (currentIndex + 1) % tabs.length;
-                this.switchTab(tabs[nextIndex].dataset.tab);
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                const prevIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-                this.switchTab(tabs[prevIndex].dataset.tab);
-            }
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const csv = VHADSModel.exportCSV(this.results);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vhads-report-${Date.now()}.csv`;
+            a.click();
         });
     }
     
-    handleVideoUpload(file) {
-        if (!file || !file.type.startsWith('video/')) {
-            this.setStatus('error', 'Please upload a valid video file (MP4, MOV, AVI)');
-            return;
-        }
+    updateSliders() {
+        const attackRateSlider = document.getElementById('attackRate');
+        const frameCountSlider = document.getElementById('frameCount');
         
-        this.state.videoFile = file;
-        const url = URL.createObjectURL(file);
-        const preview = document.getElementById('videoPreview');
+        attackRateSlider.addEventListener('input', () => {
+            document.getElementById('attackRateValue').textContent = 
+                (attackRateSlider.value * 100).toFixed(0) + '%';
+        });
         
-        preview.innerHTML = `
-            <video controls autoplay muted 
-                   style="max-height: 200px; border-radius: 8px; box-shadow: var(--shadow-md);">
-                <source src="${url}" type="${file.type}">
-                Your browser does not support video playback.
-            </video>
-        `;
-        
-        document.getElementById('uploadZone').classList.add('has-video');
+        frameCountSlider.addEventListener('input', () => {
+            document.getElementById('frameCountValue').textContent = frameCountSlider.value;
+        });
+    }
+    
+    async handleVideoUpload(file) {
+        const videoPreview = document.getElementById('videoPreview');
+        const video = videoPreview;
+        video.src = URL.createObjectURL(file);
+        video.style.display = 'block';
         document.getElementById('analyzeBtn').disabled = false;
-        this.setStatus('ready', `Video loaded: ${file.name} (${(file.size/1024/1024).toFixed(1)}MB)`);
     }
     
     async runAnalysis() {
-        if (this.state.isAnalyzing) return;
-        
-        this.state.isAnalyzing = true;
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        const statusEl = document.getElementById('status');
-        
-        analyzeBtn.disabled = true;
-        analyzeBtn.innerHTML = '<span class="btn-icon">⏳</span><span class="btn-text">Processing...</span>';
-        statusEl.textContent = '🔍 Running real-time HIGHT analysis...';
-        statusEl.className = 'status analyzing';
-        
-        try {
-            const results = await this.processFrames();
-            this.state.results = results;
-            
-            this.updateSummaryMetrics();
-            await Charts.updateRealtime(results);
-            this.renderClassificationReport();
-            
-            this.setStatus('complete', `Analysis complete: ${results.length} frames, ${(results.filter(r => r.prediction === 'normal').length / results.length * 100).toFixed(1)}% accuracy`);
-            analyzeBtn.innerHTML = '<span class="btn-icon">✅</span><span class="btn-text">Re-run Analysis</span>';
-            
-        } catch (error) {
-            console.error('Analysis failed:', error);
-            this.setStatus('error', `Analysis failed: ${error.message}`);
-            this.showError('Analysis interrupted. Please check console for details.');
-        } finally {
-            this.state.isAnalyzing = false;
-            analyzeBtn.disabled = false;
-        }
-    }
-    
-    async processFrames() {
-        const results = [];
         const nFrames = parseInt(document.getElementById('frameCount').value);
         const attackRate = parseFloat(document.getElementById('attackRate').value);
         
-        const inputCanvas = document.getElementById('inputFrame');
-        const outputCanvas = document.getElementById('outputFrame');
+        this.results = [];
+        this.currentFrame = 0;
+        this.chartData = { hamming: [], predictions: [], times: [] };
         
-        for (let i = 0; i < nFrames; i++) {
-            // Generate realistic CCTV frame
-            const frameData = VideoProcessor.generateCCTVFrame();
+        // UI: Start processing
+        document.getElementById('status').textContent = 'Processing...';
+        document.getElementById('status').className = 'status processing';
+        document.getElementById('analyzeBtn').disabled = true;
+        
+        // MAIN PIPELINE: 30 FPS realistic processing
+        for(let i = 0; i < nFrames; i++) {
+            const frameStart = performance.now();
             
-            // Probabilistic attack injection
-            const attackType = Math.random() < attackRate ?
-                VideoProcessor.selectAttackType() : 'normal';
+            // 1. GENERATE REALISTIC CCTV FRAME
+            const frameData = VideoProcessor.generateCCTVFrame(i);
             
-            // HIGHT encryption with attack simulation
+            // 2. SELECT ATTACK TYPE (probability-based)
+            const isAttack = Math.random() < attackRate;
+            const attackType = isAttack ? VideoProcessor.selectAttackType() : 'normal';
+            
+            // 3. HIGHT ENCRYPTION + FAULT INJECTION
             const encrypted = HIGHTCipher.encrypt(frameData, attackType);
             
-            // Calculate Hamming distance (first 8 bytes)
-            const hamming = HIGHTCipher.hammingDistance(
-                frameData.slice(0, 8), 
-                encrypted
-            );
+            // 4. COMPUTE HAMMING DISTANCE (block header)
+            const hamming = HIGHTCipher.hammingDistance(frameData, encrypted);
             
-            // ML prediction
-            const prediction = VHADSModel.predict(hamming, encrypted);
+            // 5. ML PREDICTION
+            const prediction = VHADSModel.predict(hamming);
             
-            // Store result
-            results.push({
+            // 6. STORE RESULT
+            const result = {
                 frame: i + 1,
                 attack: attackType,
                 prediction: prediction.prediction,
-                hamming: hamming,
+                hamming,
                 confidence: prediction.confidence
-            });
+            };
+            this.results.push(result);
             
-            // Real-time visualization (30 FPS)
-            VideoProcessor.renderFrame(inputCanvas, frameData);
-            VideoProcessor.renderEncryptedFrame(outputCanvas, encrypted, frameData);
+            // 7. REAL-TIME VISUALIZATION (30 FPS)
+            VideoProcessor.renderFrame(document.getElementById('inputFrame'), frameData);
+            VideoProcessor.renderEncryptedFrame(
+                document.getElementById('outputFrame'), 
+                encrypted, 
+                frameData
+            );
             
-            // Update UI progressively
-            document.getElementById('frameNum').textContent = i + 1;
+            // 8. UI UPDATES
+            document.getElementById('frameNum').textContent = `${i + 1}/${nFrames}`;
             document.getElementById('hammingValue').textContent = hamming;
+            document.getElementById('predictionValue').textContent = prediction.prediction.toUpperCase();
+            document.getElementById('predictionValue').className = `prediction ${prediction.prediction}`;
             
-            const predEl = document.getElementById('predictionValue');
-            predEl.textContent = prediction.prediction.toUpperCase();
-            predEl.className = `prediction ${prediction.prediction}`;
+            // 9. CHART UPDATE
+            this.chartData.hamming.push(hamming);
+            this.chartData.predictions.push(prediction.prediction);
+            this.chartData.times.push(i + 1);
+            this.updateRealtimeChart();
             
-            // Throttle for realistic 30 FPS
-            await new Promise(resolve => setTimeout(resolve, 33));
+            // 10. PROGRESS METRICS
+            this.updateMetrics();
+            
+            // 30 FPS THROTTLE (Realistic)
+            while(performance.now() - frameStart < 33) {
+                await new Promise(r => requestAnimationFrame(r));
+            }
         }
         
-        return results;
+        // FINALIZE: Update all tabs
+        this.finalizeAnalysis();
+        
+        console.log('✅ Analysis complete:', this.results.length, 'frames processed');
     }
     
-    updateSummaryMetrics() {
-        const results = this.state.results;
-        const nFrames = results.length;
-        const normalCount = results.filter(r => r.prediction === 'normal').length;
-        const accuracy = (normalCount / nFrames * 100);
+    updateRealtimeChart() {
+        const chart = document.getElementById('realtimeChart');
+        Plotly.newPlot(chart, [{
+            x: this.chartData.times,
+            y: this.chartData.hamming,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: 'Hamming Distance',
+            line: { color: '#3b82f6', width: 3 }
+        }], {
+            title: 'Real-time Hamming Distance Analysis',
+            xaxis: { title: 'Frame' },
+            yaxis: { title: 'Hamming Distance', range: [0, 10] }
+        }, { responsive: true });
+    }
+    
+    updateMetrics() {
+        const normalCount = this.results.filter(r => r.prediction === 'normal').length;
+        const attackCount = this.results.length - normalCount;
+        const correct = this.results.filter(r => r.prediction === r.attack).length;
+        const accuracy = (correct / this.results.length * 100).toFixed(1);
         
-        document.getElementById('overallAccuracy').textContent = accuracy.toFixed(1) + '%';
+        document.getElementById('overallAccuracy').textContent = accuracy + '%';
         document.getElementById('normalFrames').textContent = normalCount;
-        document.getElementById('attackFrames').textContent = nFrames - normalCount;
+        document.getElementById('attackFrames').textContent = attackCount;
     }
     
-    renderClassificationReport() {
-        const report = VHADSModel.generateReport(this.state.results);
-        const container = document.getElementById('classificationReport');
+    finalizeAnalysis() {
+        // Update status
+        document.getElementById('status').textContent = 'Complete';
+        document.getElementById('status').className = 'status ready';
+        document.getElementById('analyzeBtn').disabled = false;
         
-        container.innerHTML = `
-            <header style="margin-bottom: 2rem;">
-                <h3 style="color: var(--primary); margin-bottom: 0.5rem;">
-                    📋 Classification Report
-                </h3>
-                <p style="color: var(--text-secondary); margin: 0;">
-                    Analysis of ${this.state.results.length} frames | 
-                    Attack rate: ${(document.getElementById('attackRate').value * 100).toFixed(0)}%
-                </p>
-            </header>
-            
-            <table class="results-table" role="table" aria-label="Classification performance metrics">
-                <thead>
-                    <tr>
-                        <th scope="col">Class</th>
-                        <th scope="col">Precision</th>
-                        <th scope="col">Recall</th>
-                        <th scope="col">F1-Score</th>
-                        <th scope="col">Support</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${VHADSModel.classNames.map(className => {
-                        const metrics = report[className];
-                        const support = this.state.results.filter(r => r.attack === className).length;
-                        return `
-                            <tr>
-                                <th scope="row">${className.charAt(0).toUpperCase() + className.slice(1)}</th>
-                                <td>${metrics.precision.toFixed(3)}</td>
-                                <td>${metrics.recall.toFixed(3)}</td>
-                                <td><strong>${metrics.f1_score.toFixed(3)}</strong></td>
-                                <td>${support}</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                    <tr style="font-weight: 800; background: linear-gradient(135deg, #f3f4f6, #e5e7eb);">
-                        <th scope="row">Macro Average</th>
-                        <td>${(Object.values(report).reduce((sum, m) => sum + m.precision, 0) / 4).toFixed(3)}</td>
-                        <td>${(Object.values(report).reduce((sum, m) => sum + m.recall, 0) / 4).toFixed(3)}</td>
-                        <td><strong>${(Object.values(report).reduce((sum, m) => sum + m.f1_score, 0) / 4).toFixed(3)}</strong></td>
-                        <td>${this.state.results.length}</td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
+        // Update metrics tab
+        this.renderMetricsTab();
         
-        // Enable CSV export
-        const exportBtn = document.getElementById('exportBtn');
-        exportBtn.style.display = 'inline-flex';
-        exportBtn.onclick = () => this.exportCSV();
+        // Update report tab
+        this.renderReportTab();
+        
+        // Show export button
+        document.getElementById('exportBtn').style.display = 'block';
     }
     
-    exportCSV() {
-        const csvContent = [
-            ['Frame', 'Attack_Type', 'Prediction', 'Hamming_Distance', 'Confidence'],
-            ...this.state.results.map(r => [
-                r.frame,
-                r.attack,
-                r.prediction,
-                r.hamming,
-                r.confidence.toFixed(4)
-            ])
-        ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    renderMetricsTab() {
+        const report = VHADSModel.generateReport(this.results);
         
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        
-        link.setAttribute('href', url);
-        link.setAttribute('download', `VHADS-Analysis-${new Date().toISOString().slice(0,10)}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        Plotly.newPlot('confusionMatrix', [{
+            type: 'heatmap',
+            z: [[report.normal.precision, report.fault.precision, report.reduced.precision, report.differential.precision]],
+            x: this.VHADSModel.classNames,
+            y: ['Predictions'],
+            colorscale: 'Viridis'
+        }]);
     }
     
-    switchTab(tabId) {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-            btn.setAttribute('aria-selected', 'false');
-            btn.setAttribute('tabindex', '-1');
+    renderReportTab() {
+        const report = VHADSModel.generateReport(this.results);
+        let reportText = 'VHADS Pro v2.1 - CLASSIFICATION REPORT\n';
+        reportText += '===============================================\n\n';
+        
+        this.VHADSModel.classNames.forEach(cls => {
+            const m = report[cls];
+            reportText += `${cls.toUpperCase():<12} Precision: ${m.precision.toFixed(3)}\n`;
+            reportText += `{' '.padStart(12)} Recall:    ${m.recall.toFixed(3)}\n`;
+            reportText += `{' '.padStart(12)} F1-Score:  ${m.f1.toFixed(3)}\n`;
+            reportText += `{' '.padStart(12)} Support:   ${m.support}\n\n`;
         });
         
-        document.querySelectorAll('.tab-panel').forEach(panel => {
-            panel.classList.remove('active');
-        });
+        reportText += `Overall Accuracy: ${report.overall.accuracy.toFixed(3)} (${report.overall.total_frames} frames)\n`;
         
-        const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
-        const activePanel = document.getElementById(`${tabId}-panel`);
-        
-        activeBtn.classList.add('active');
-        activeBtn.setAttribute('aria-selected', 'true');
-        activeBtn.setAttribute('tabindex', '0');
-        activePanel.classList.add('active');
-        activePanel.focus();
-    }
-    
-    setStatus(type, message) {
-        const statusEl = document.getElementById('status');
-        statusEl.textContent = message;
-        statusEl.className = `status ${type}`;
-        statusEl.setAttribute('aria-live', 'assertive');
-    }
-    
-    showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.style.cssText = `
-            position: fixed; top: 20px; right: 20px; background: #fee2e2; 
-            color: #991b1b; padding: 1rem 1.5rem; border-radius: 8px; 
-            box-shadow: 0 10px 25px rgba(239,68,68,0.3); z-index: 10000;
-            border-left: 4px solid #ef4444; max-width: 400px;
-        `;
-        errorDiv.innerHTML = `
-            <strong>⚠️ Analysis Error</strong><br>${message}
-            <button onclick="this.parentElement.remove()" style="float:right;background:none;border:none;font-size:1.2rem;cursor:pointer;">×</button>
-        `;
-        document.body.appendChild(errorDiv);
-        
-        setTimeout(() => errorDiv.remove(), 10000);
-    }
-    
-    updateControls() {
-        document.getElementById('attackRateValue').textContent = this.state.attackRate || 0.25;
-        document.getElementById('frameCountValue').textContent = this.state.frameCount || 64;
+        document.getElementById('classificationReport').textContent = reportText;
     }
 }
 
-// Initialize application when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new VHADSApp());
-} else {
-    new VHADSApp();
-}
-
-console.log('✅ VHADS Pro main application loaded - Production ready');
+// Initialize when DOM loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.vhadsApp = new VHADSApp();
+});
 
