@@ -11,12 +11,12 @@
 
 | Attack Type | Description | Prevalence |
 |-------------|-------------|------------|
-| **Normal** | Clean encryption | 70% |
-| **Fault** | Transient bit flips | 15% |
-| **Reduced** | Early round termination | 10% |
-| **Differential** | Controlled differences | 5% |
+| **Normal** | Clean encryption | 25% |
+| **Fault** | Transient bit flips | 25% |
+| **Reduced** | Early round termination | 25% |
+| **Differential** | Controlled differences | 25% |
 
-**Performance**: Macro-F1 = **89.8%**, ROC-AUC = **94.2%** (15K training frames)
+**Performance**: Macro-F1 = **49.8%**, ROC-AUC = **50.5%** (15K training frames)
 
 ## 🏗️ Production Architecture
 
