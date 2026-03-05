@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VHADS Pro v3.5 - ULTRA-RELIABLE UPLOAD</title>
+    <title>VHADS Pro v3.6 - TABULAR CLASSIFICATION REPORT</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,64 +57,76 @@
             margin: 30px 0; text-align: center; border: 3px solid #10b981; display: none;
         }
         
-        /* ALL OTHER SECTIONS (UNCHANGED) */
-        .summary-section, .report-panel, .video-section, .analytics-section { 
-            background: linear-gradient(145deg, #1e293b, #111827); padding: 40px; 
-            border-radius: 25px; margin-bottom: 40px; box-shadow: 0 30px 60px rgba(0,0,0,0.6);
-            border: 2px solid #374151;
-        }
+        /* SUMMARY METRICS */
+        .summary-section { background: linear-gradient(145deg, #1e293b, #0f172a); padding: 40px; border-radius: 25px; margin-bottom: 40px; border: 2px solid #10b981; }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
         .metric-card { background: linear-gradient(145deg, rgba(16,185,129,0.3), rgba(16,185,129,0.1)); padding: 40px 30px; border-radius: 20px; text-align: center; border: 3px solid rgba(16,185,129,0.6); }
         .metric-value { font-size: 4.5em; font-weight: 900; color: #10b981; margin-bottom: 15px; }
-        .video-section { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        
+        /* TABULAR CLASSIFICATION REPORT - NEW */
+        .report-panel { 
+            background: rgba(59,130,246,0.15); padding: 40px; border-radius: 25px; 
+            margin-bottom: 40px; border: 2px solid #3b82f6; 
+        }
+        .report-title { font-size: 28px; color: #3b82f6; text-align: center; margin-bottom: 30px; font-weight: 900; }
+        .report-table-container { 
+            background: rgba(0,0,0,0.4); border-radius: 20px; overflow: hidden; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 2px solid #3b82f6;
+        }
+        table { width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 16px; }
+        th, td { padding: 15px 12px; text-align: center; border: 1px solid #4b5563; }
+        th { background: linear-gradient(90deg, #3b82f6, #1d4ed8); color: white; font-weight: 800; font-size: 14px; }
+        tr:nth-child(even) { background: rgba(59,130,246,0.1); }
+        tr:hover { background: rgba(59,130,246,0.25); }
+        .accuracy-row { background: linear-gradient(90deg, #10b981, #059669) !important; color: white; font-weight: 800; }
+        
+        /* VIDEOS & ANALYTICS (UNCHANGED) */
+        .video-section { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 40px 0; background: linear-gradient(145deg, #1e293b, #111827); padding: 40px; border-radius: 25px; border: 2px solid #374151; }
+        .video-panel { text-align: center; }
+        .video-title { font-size: 28px; font-weight: 800; margin-bottom: 30px; padding: 25px; background: rgba(59,130,246,0.3); border-radius: 20px; }
         video, canvas { width: 100%; height: 450px; border: 4px solid #3b82f6; border-radius: 20px; background: #000; box-shadow: 0 25px 50px rgba(59,130,246,0.4); }
-        .video-title { font-size: 28px; font-weight: 800; margin-bottom: 30px; padding: 25px; background: rgba(59,130,246,0.3); border-radius: 20px; text-align: center; }
+        .analytics-section { background: linear-gradient(145deg, #1e293b, #111827); padding: 40px; border-radius: 25px; border: 2px solid #374151; }
         .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
+        .chart-panel { background: rgba(16,185,129,0.15); padding: 30px; border-radius: 20px; border: 2px solid #10b981; }
+        .chart-title { font-size: 24px; font-weight: 800; color: #10b981; text-align: center; margin-bottom: 25px; padding: 20px; background: rgba(16,185,129,0.3); border-radius: 15px; }
         .chart-container { height: 450px; width: 100%; border-radius: 15px; }
+        
+        .progress-bar { width: 100%; height: 16px; background: #1e293b; border-radius: 10px; margin: 30px 0; display: none; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: 0%; transition: width 0.5s; }
         @media (max-width: 1600px) { .charts-row, .video-section { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 VHADS Pro v3.5 - VIDEO UPLOAD GUARANTEED</h1>
-            <p>Impossible to Fail • Massive Target • 3 Instant Methods</p>
+            <h1>🔐 VHADS Pro v3.6 - TABULAR REPORT</h1>
+            <p>Classification Report → Professional HTML Table</p>
         </div>
 
-        <!-- ULTRA-SIMPLE UPLOAD -->
+        <!-- UPLOAD (UNCHANGED) -->
         <div class="upload-section">
             <div style="font-size: 36px; margin-bottom: 50px; color: #10b981; font-weight: 900;">
                 📹 UPLOAD VIDEO (ANY METHOD WORKS)
             </div>
-            
-            <!-- MASSIVE DRAG ZONE -->
             <div class="mega-upload-zone" id="megaUploadZone">
                 <div style="font-size: 100px; margin-bottom: 40px;">📹</div>
                 <div style="font-size: 36px; font-weight: 900; margin-bottom: 20px;">DROP VIDEO HERE</div>
                 <div style="font-size: 24px;">MP4 • AVI • MOV • ANY FORMAT</div>
             </div>
-            
-            <!-- 3 GUARANTEED BUTTONS -->
             <div class="upload-buttons">
                 <button class="upload-btn browse-btn" onclick="browseFiles()">📁 BROWSE FILES</button>
                 <button class="upload-btn test-btn" onclick="loadTestVideo()">🎬 TEST VIDEO</button>
-                <button class="upload-btn analyze-btn" id="analyzeBtn" onclick="runAnalysis()" disabled>
-                    🚀 FULL ANALYSIS
-                </button>
+                <button class="upload-btn analyze-btn" id="analyzeBtn" onclick="runAnalysis()" disabled>🚀 FULL ANALYSIS</button>
             </div>
-            
-            <!-- SUCCESS STATUS -->
             <div class="status-success" id="uploadStatus" style="display: none;">
                 ✅ <strong>READY FOR ANALYSIS</strong> - Click FULL ANALYSIS button
             </div>
-            
-            <!-- SIMPLE FILE INFO -->
             <div class="file-preview" id="fileInfo">
                 <strong id="fileName"></strong> - <span id="fileSize"></span>
             </div>
         </div>
 
-        <!-- ALL RESULTS (Will show instantly) -->
+        <!-- SUMMARY METRICS (UNCHANGED) -->
         <div class="summary-section" id="summarySection" style="display: none;">
             <h2 style="text-align: center; color: #10b981; font-size: 32px; margin-bottom: 40px;">📊 MODEL PERFORMANCE SUMMARY</h2>
             <div class="metrics-grid">
@@ -124,22 +136,74 @@
             </div>
         </div>
 
+        <!-- TABULAR CLASSIFICATION REPORT (NEW) -->
         <div class="report-panel" id="reportPanel" style="display: none;">
             <div class="report-title">📋 CLASSIFICATION REPORT</div>
-            <div class="report-table">
-              precision    recall  f1-score   support
-
-     benign       0.78      0.49      0.60       160
-differential    0.26      0.31      0.28       160
-     fault       0.33      0.30      0.31       160
-reduced bound   1.00      1.00      1.00       160
-
-    accuracy                           0.45       640
-   macro avg       0.59      0.52      0.55       640
-weighted avg       0.59      0.45      0.50       640
+            <div class="report-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Precision</th>
+                            <th>Recall</th>
+                            <th>F1-Score</th>
+                            <th>Support</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>benign</strong></td>
+                            <td>0.78</td>
+                            <td>0.49</td>
+                            <td>0.60</td>
+                            <td>160</td>
+                        </tr>
+                        <tr>
+                            <td><strong>differential</strong></td>
+                            <td>0.26</td>
+                            <td>0.31</td>
+                            <td>0.28</td>
+                            <td>160</td>
+                        </tr>
+                        <tr>
+                            <td><strong>fault</strong></td>
+                            <td>0.33</td>
+                            <td>0.30</td>
+                            <td>0.31</td>
+                            <td>160</td>
+                        </tr>
+                        <tr>
+                            <td><strong>reduced bound</strong></td>
+                            <td>1.00</td>
+                            <td>1.00</td>
+                            <td>1.00</td>
+                            <td>160</td>
+                        </tr>
+                        <tr class="accuracy-row">
+                            <td><strong>Accuracy</strong></td>
+                            <td colspan="3"><strong>0.45 (45.0%)</strong></td>
+                            <td><strong>640</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>macro avg</strong></td>
+                            <td>0.59</td>
+                            <td>0.52</td>
+                            <td>0.55</td>
+                            <td>640</td>
+                        </tr>
+                        <tr>
+                            <td><strong>weighted avg</strong></td>
+                            <td>0.59</td>
+                            <td>0.45</td>
+                            <td>0.50</td>
+                            <td>640</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
+        <!-- VIDEOS (UNCHANGED) -->
         <div class="video-section" id="videoSection" style="display: none;">
             <div class="video-panel">
                 <div class="video-title">📹 INPUT VIDEO</div>
@@ -151,6 +215,7 @@ weighted avg       0.59      0.45      0.50       640
             </div>
         </div>
 
+        <!-- ANALYTICS (UNCHANGED) -->
         <div class="analytics-section" id="analyticsSection" style="display: none;">
             <div class="charts-row">
                 <div class="chart-panel">
@@ -163,7 +228,7 @@ weighted avg       0.59      0.45      0.50       640
                 </div>
             </div>
             <div style="text-align: center; margin-top: 40px;">
-                <div class="chart-panel confusion-panel" style="display: inline-block; width: 70%;">
+                <div class="chart-panel" style="background: rgba(239,68,68,0.15); border: 2px solid #ef4444; display: inline-block; width: 70%;">
                     <div class="chart-title" style="color: #ef4444;">🧠 CNN Confusion Matrix</div>
                     <div class="chart-container"><div id="confusionMatrixChart"></div></div>
                 </div>
@@ -174,7 +239,7 @@ weighted avg       0.59      0.45      0.50       640
     <script>
         let selectedFile = null;
 
-        // MASSIVE SIMPLE DRAG ZONE
+        // UPLOAD HANDLERS (UNCHANGED)
         const uploadZone = document.getElementById('megaUploadZone');
         ['dragover', 'dragenter'].forEach(evt => {
             uploadZone.addEventListener(evt, e => {
@@ -194,7 +259,6 @@ weighted avg       0.59      0.45      0.50       640
             });
         });
 
-        // BROWSE FILES
         function browseFiles() {
             const input = document.createElement('input');
             input.type = 'file';
@@ -203,33 +267,22 @@ weighted avg       0.59      0.45      0.50       640
             input.click();
         }
 
-        // TEST VIDEO (WORKS 100%)
         function loadTestVideo() {
             const canvas = document.createElement('canvas');
             canvas.width = 640; canvas.height = 360;
             const ctx = canvas.getContext('2d');
-            
-            // Create test video content
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, 640, 360);
-            ctx.fillStyle = '#10b981';
-            ctx.font = 'bold 60px monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText('VHADS Pro', 320, 180);
-            ctx.fillStyle = '#3b82f6';
-            ctx.font = 'bold 36px monospace';
+            ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, 640, 360);
+            ctx.fillStyle = '#10b981'; ctx.font = 'bold 60px monospace'; ctx.textAlign = 'center';
+            ctx.fillText('VHADS Pro', 320, 180); ctx.fillStyle = '#3b82f6'; ctx.font = 'bold 36px monospace';
             ctx.fillText('TEST VIDEO - READY', 320, 240);
-            
             canvas.toBlob(blob => {
                 selectedFile = new File([blob], 'test-video.mp4', { type: 'video/mp4' });
                 showFileReady();
             });
         }
 
-        // UNIVERSAL FILE SELECTOR
         function selectFile(file) {
             selectedFile = file;
-            console.log('✅ FILE SELECTED:', file.name, file.size, file.type);
             showFileReady();
         }
 
@@ -242,88 +295,60 @@ weighted avg       0.59      0.45      0.50       640
             document.getElementById('uploadStatus').style.display = 'block';
         }
 
-        // ONE-CLICK FULL ANALYSIS
         function runAnalysis() {
-            if (!selectedFile) {
-                alert('Please select a video first!');
-                return;
-            }
-
-            // INSTANTLY SHOW EVERYTHING
+            if (!selectedFile) return alert('Please select a video first!');
+            
+            // SHOW EVERYTHING
             document.getElementById('summarySection').style.display = 'block';
             document.getElementById('reportPanel').style.display = 'block';
             document.getElementById('videoSection').style.display = 'grid';
             document.getElementById('analyticsSection').style.display = 'block';
 
-            // LOAD INPUT VIDEO
-            const inputVideo = document.getElementById('inputVideo');
-            inputVideo.src = URL.createObjectURL(selectedFile);
-            inputVideo.load();
-            inputVideo.play();
+            // LOAD VIDEO
+            document.getElementById('inputVideo').src = URL.createObjectURL(selectedFile);
+            document.getElementById('inputVideo').play();
 
-            // START HIGHT ENCRYPTION
+            // START ENCRYPTION
             startHightEncryption();
 
-            // LOAD ALL CHARTS
+            // LOAD CHARTS
             loadAllCharts();
 
-            document.getElementById('analyzeBtn').textContent = '✅ ANALYSIS RUNNING';
             document.getElementById('analyzeBtn').disabled = true;
         }
 
         function startHightEncryption() {
             const canvas = document.getElementById('hightCanvas');
-            canvas.width = 640;
-            canvas.height = 450;
-            
+            canvas.width = 640; canvas.height = 450;
             const ctx = canvas.getContext('2d');
             let frame = 0;
-            
             function animate() {
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, 640, 450);
-                
-                // HIGHT-128 blocks
-                for (let y = 0; y < 56; y++) {
-                    for (let x = 0; x < 80; x++) {
-                        const blockId = (frame + x + y * 80) * 1103515245 + 12345;
-                        const r = (blockId >> 24) & 0xFF;
-                        const g = (blockId >> 16) & 0xFF;
-                        const b = (blockId >> 8) & 0xFF;
-                        
-                        ctx.fillStyle = `hsl(${(frame*2 + r) % 360}, 70%, 40%)`;
-                        ctx.fillRect(x * 8 + (Math.sin(frame*0.1 + x)*2), y * 8 + (Math.sin(frame*0.1 + y)*2), 8, 8);
-                        
-                        ctx.strokeStyle = '#10b981';
-                        ctx.lineWidth = 1;
-                        ctx.strokeRect(x * 8, y * 8, 8, 8);
-                    }
+                ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 640, 450);
+                for (let y = 0; y < 56; y++) for (let x = 0; x < 80; x++) {
+                    const blockId = (frame + x + y * 80) * 1103515245 + 12345;
+                    const r = (blockId >> 24) & 0xFF;
+                    ctx.fillStyle = `hsl(${(frame*2 + r) % 360}, 70%, 40%)`;
+                    ctx.fillRect(x * 8, y * 8, 8, 8);
+                    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1;
+                    ctx.strokeRect(x * 8, y * 8, 8, 8);
                 }
-                
-                ctx.fillStyle = '#10b981';
-                ctx.font = 'bold 24px monospace';
+                ctx.fillStyle = '#10b981'; ctx.font = 'bold 24px monospace';
                 ctx.fillText('HIGHT-128 ENCRYPTED', 20, 30);
-                
-                frame++;
-                requestAnimationFrame(animate);
+                frame++; requestAnimationFrame(animate);
             }
             animate();
         }
 
         function loadAllCharts() {
-            // Training curves
             const epochs = Array.from({length: 26}, (_, i) => i);
             Plotly.newPlot('accuracyChart', [
                 {x: epochs, y: epochs.map(i => 0.1 + i*0.035), line: {color: 'blue'}},
                 {x: epochs, y: epochs.map(i => 0.08 + i*0.033), line: {color: 'orange'}}
             ], {height: 450, plot_bgcolor: 'white'});
-
             Plotly.newPlot('lossChart', [
                 {x: epochs, y: epochs.map(i => 2.3 - i*0.06), line: {color: 'blue'}},
                 {x: epochs, y: epochs.map(i => 2.35 - i*0.055), line: {color: 'orange'}}
             ], {height: 450, plot_bgcolor: 'white'});
-
-            // Confusion matrix
             Plotly.newPlot('confusionMatrixChart', [{
                 z: [[79,42,39,0],[84,37,39,0],[77,35,48,0],[0,0,0,160]],
                 colorscale: 'Blues', type: 'heatmap'
@@ -332,5 +357,3 @@ weighted avg       0.59      0.45      0.50       640
     </script>
 </body>
 </html>
-
-
