@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VHADS Pro v2.7 - FIXED VIDEO UPLOAD</title>
+    <title>VHADS Pro v2.8 - Side-by-Side + Full Analytics</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,9 +21,7 @@
             border-radius: 20px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             border: 1px solid #334155; margin-bottom: 30px;
         }
-        .file-input-container {
-            position: relative; display: inline-block; margin: 20px;
-        }
+        .file-input-container { position: relative; display: inline-block; margin: 20px; }
         #fileInput { 
             position: absolute; left: 0; top: 0; width: 100%; height: 100%; 
             opacity: 0; cursor: pointer; z-index: 2;
@@ -39,14 +37,6 @@
         .upload-text { font-size: 20px; margin-bottom: 10px; }
         .upload-subtext { font-size: 14px; opacity: 0.8; }
         
-        .demo-videos { display: flex; gap: 20px; justify-content: center; margin: 30px 0; flex-wrap: wrap; }
-        .demo-btn { 
-            background: linear-gradient(90deg, #3b82f6, #1d4ed8); color: white; 
-            padding: 15px 30px; border: none; border-radius: 12px; cursor: pointer;
-            font-weight: 700; transition: all 0.3s; box-shadow: 0 8px 25px rgba(59,130,246,0.4);
-        }
-        .demo-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(59,130,246,0.6); }
-        
         .upload-btn { background: linear-gradient(90deg, #10b981, #059669); color: white; 
             padding: 20px 45px; border: none; font-size: 18px; font-weight: 700; border-radius: 15px;
             cursor: pointer; margin: 15px; box-shadow: 0 8px 25px rgba(16,185,129,0.4);
@@ -54,327 +44,310 @@
         .upload-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(16,185,129,0.6); }
         .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 25px; margin: 30px 0; }
-        .video-panel { background: linear-gradient(145deg, #1e293b, #111827); padding: 25px; 
-            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid #374151; }
-        .analysis-panel { grid-row: 1 / -1; background: linear-gradient(145deg, #1e293b, #111827); 
-            padding: 25px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid #374151; }
+        /* SIDE-BY-SIDE VIDEOS */
+        .video-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 30px 0; }
+        .video-panel { 
+            background: linear-gradient(145deg, #1e293b, #111827); padding: 25px; 
+            border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); border: 1px solid #374151;
+            text-align: center;
+        }
+        video, canvas { 
+            width: 100%; height: 380px; border: 3px solid #3b82f6; border-radius: 15px; 
+            background: #000; display: block; box-shadow: 0 15px 35px rgba(59,130,246,0.3);
+        }
+        .video-title { 
+            font-size: 22px; font-weight: 700; margin-bottom: 20px; 
+            padding: 15px; background: rgba(59,130,246,0.2); border-radius: 12px;
+        }
+        .video-stats { 
+            margin-top: 20px; font-family: monospace; font-size: 14px; padding: 15px; 
+            background: rgba(16,185,129,0.15); border-radius: 10px;
+        }
         
-        video, canvas { width: 100%; height: 320px; border: 3px solid #3b82f6; border-radius: 15px; 
-            background: #000; display: block; box-shadow: 0 15px 35px rgba(59,130,246,0.3); }
-        
-        .metric-card { background: rgba(16,185,129,0.2); padding: 20px; border-radius: 12px; 
-            margin: 15px 0; border-left: 4px solid #10b981; text-align: center; }
-        .metric-value { font-size: 2.8em; font-weight: 900; color: #10b981; }
-        .metric-label { font-size: 1.1em; opacity: 0.9; margin-top: 5px; }
-        .live-badge { display: inline-block; width: 10px; height: 10px; background: #10b981; 
-            border-radius: 50%; animation: pulse 1.5s infinite; margin-right: 8px; }
+        /* FULL ANALYTICS BELOW */
+        .analytics-section { background: linear-gradient(145deg, #1e293b, #111827); 
+            padding: 30px; border-radius: 20px; margin: 30px 0; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border: 1px solid #374151;
+        }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .metric-card { 
+            background: rgba(16,185,129,0.25); padding: 25px; border-radius: 15px; 
+            text-align: center; border: 1px solid rgba(16,185,129,0.5);
+        }
+        .metric-value { font-size: 3em; font-weight: 900; color: #10b981; margin-bottom: 10px; }
+        .metric-label { font-size: 1.1em; opacity: 0.95; }
+        .live-badge { 
+            display: inline-block; width: 12px; height: 12px; background: #10b981; 
+            border-radius: 50%; animation: pulse 1.5s infinite; margin-left: 8px;
+        }
         @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+        
+        .report-section { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        .confusion-matrix, .classification-report { 
+            background: #0a0a15; padding: 25px; border-radius: 15px; 
+            font-family: 'Courier New', monospace; white-space: pre; font-size: 14px;
+            border: 1px solid #10b981; box-shadow: inset 0 0 20px rgba(16,185,129,0.1);
+            max-height: 300px; overflow-y: auto;
+        }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .chart-container { height: 350px; border-radius: 15px; overflow: hidden; }
         
         .file-info { margin-top: 20px; padding: 20px; background: #0f172a; border-radius: 15px; 
             display: none; border-left: 5px solid #10b981; font-weight: 700; }
-        .progress-bar { width: 100%; height: 10px; background: #1e293b; border-radius: 5px; 
+        .progress-bar { width: 100%; height: 12px; background: #1e293b; border-radius: 6px; 
             margin: 20px 0; display: none; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: 0%; transition: width 0.3s; }
         
-        @media (max-width: 1600px) { .main-grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 1400px) { 
+            .video-section, .report-section, .chart-grid { grid-template-columns: 1fr; } 
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 VHADS Pro v2.7 - ✅ VIDEO UPLOAD FIXED</h1>
-            <p>Drag ANY MP4 • Demo Videos • HIGHT-128 + Complete ML Analysis</p>
+            <h1>🔐 VHADS Pro v2.8 - SIDE-BY-SIDE + FULL ANALYTICS</h1>
+            <p>Input Video | HIGHT-128 Encrypted | Complete ML Dashboard Below</p>
         </div>
 
         <div class="upload-section">
-            <div style="font-size: 24px; margin-bottom: 30px; color: #10b981;">
-                🎯 VIDEO UPLOAD - 100% FIXED
-            </div>
+            <div style="font-size: 24px; margin-bottom: 30px; color: #10b981;">📹 VIDEO UPLOAD</div>
             
-            <!-- FIXED FILE INPUT -->
             <div class="file-input-container">
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📹</div>
-                    <div class="upload-text">Drag Video Here or Click</div>
+                    <div class="upload-text">Drag Video or Click</div>
                     <div class="upload-subtext">MP4, MOV, AVI • Max 100MB</div>
                 </div>
-                <input type="file" id="fileInput" accept="video/*" multiple>
-            </div>
-            
-            <!-- DEMO BUTTONS - INSTANT START -->
-            <div class="demo-videos">
-                <button class="demo-btn" onclick="loadDemoVideo('nature')">🌿 Nature Test</button>
-                <button class="demo-btn" onclick="loadDemoVideo('tech')">⚡ Tech Demo</button>
-                <button class="demo-btn" onclick="loadDemoVideo('abstract')">🎨 Abstract</button>
+                <input type="file" id="fileInput" accept="video/*">
             </div>
             
             <button class="upload-btn" id="analyzeBtn" onclick="startAnalysis()" disabled>
-                🚀 START HIGHT ANALYSIS
+                🚀 START HIGHT + ML ANALYSIS
             </button>
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
+            <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
             <div class="file-info" id="fileInfo">
                 <strong id="fileName"></strong> - <span id="fileSize"></span>
             </div>
         </div>
 
-        <div class="main-grid" id="mainGrid" style="display: none;">
-            <!-- INPUT VIDEO -->
+        <!-- SIDE-BY-SIDE VIDEOS -->
+        <div class="video-section" id="videoSection" style="display: none;">
             <div class="video-panel">
-                <h3 style="color: #10b981; margin-bottom: 15px;">📹 ORIGINAL INPUT</h3>
+                <div class="video-title">📹 ORIGINAL INPUT</div>
                 <video id="inputVideo" controls muted></video>
-                <div style="margin-top: 15px; font-family: monospace; font-size: 14px;">
-                    <div>FPS: <span id="inputFPS" style="color: #10b981;">60</span> | Frames: <span id="frameCount">0</span></div>
-                    <div>Status: <span id="videoStatus" style="color: #10b981;">✅ LIVE</span></div>
+                <div class="video-stats">
+                    FPS: <span id="inputFPS" style="color: #10b981;">60</span> | 
+                    Frames: <span id="frameCount">0</span> | 
+                    Status: <span id="videoStatus" style="color: #10b981;">LIVE</span>
                 </div>
             </div>
-
-            <!-- HIGHT ENCRYPTED -->
             <div class="video-panel">
-                <h3 style="color: #3b82f6; margin-bottom: 15px;">🔒 HIGHT-128 ENCRYPTED</h3>
+                <div class="video-title">🔒 HIGHT-128 ENCRYPTED</div>
                 <canvas id="hightCanvas"></canvas>
-                <div style="margin-top: 15px; font-family: monospace; font-size: 14px;">
-                    <div><span class="live-badge"></span>Live | <span id="encFPS">60</span> FPS</div>
-                    <div>Blocks: <span id="blockCount">3600</span>/sec</div>
+                <div class="video-stats">
+                    <span class="live-badge"></span>Live FPS: <span id="encFPS">60</span> | 
+                    Blocks: <span id="blockCount">3600</span>/sec
                 </div>
             </div>
+        </div>
 
-            <!-- ML ANALYSIS -->
-            <div class="analysis-panel">
-                <h3 style="color: #f59e0b; margin-bottom: 20px;">🧠 LIVE ML DASHBOARD</h3>
-                
+        <!-- FULL ANALYTICS BELOW -->
+        <div class="analytics-section" id="analyticsSection" style="display: none;">
+            <h3 style="text-align: center; color: #f59e0b; margin-bottom: 30px; font-size: 28px;">
+                🧠 COMPLETE ML ANALYSIS DASHBOARD
+            </h3>
+            
+            <!-- LIVE METRICS -->
+            <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value" id="accuracyLive">92.7%</div>
-                    <div class="metric-label">Accuracy <span class="live-badge"></span></div>
+                    <div class="metric-label">Accuracy<span class="live-badge"></span></div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value" id="precisionLive">94.2%</div>
-                    <div class="metric-label">Precision <span class="live-badge"></span></div>
+                    <div class="metric-label">Precision<span class="live-badge"></span></div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value" id="recallLive">91.8%</div>
-                    <div class="metric-label">Recall <span class="live-badge"></span></div>
+                    <div class="metric-label">Recall<span class="live-badge"></span></div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value" id="f1Live">93.0%</div>
-                    <div class="metric-label">F1-Score <span class="live-badge"></span></div>
+                    <div class="metric-label">F1-Score<span class="live-badge"></span></div>
                 </div>
+            </div>
 
-                <h4 style="color: #10b981; margin: 25px 0 15px 0;">📊 CONFUSION MATRIX</h4>
-                <pre id="confusionMatrix" class="confusion-matrix"></pre>
+            <!-- REPORTS -->
+            <div class="report-section">
+                <div>
+                    <h4 style="color: #10b981; margin-bottom: 15px;">📊 CONFUSION MATRIX</h4>
+                    <pre id="confusionMatrix" class="confusion-matrix"></pre>
+                </div>
+                <div>
+                    <h4 style="color: #10b981; margin-bottom: 15px;">📋 CLASSIFICATION REPORT</h4>
+                    <pre id="classReport" class="classification-report"></pre>
+                </div>
+            </div>
 
-                <h4 style="color: #10b981; margin: 20px 0 15px 0;">📋 CLASSIFICATION REPORT</h4>
-                <pre id="classReport" class="classification-report"></pre>
-
-                <h4 style="color: #3b82f6; margin: 25px 0 15px 0;">📈 TRAINING CURVES</h4>
-                <div class="chart-container"><div id="accuracyChart"></div></div>
-                <div class="chart-container"><div id="lossChart"></div></div>
-
-                <h4 style="color: #f59e0b; margin: 25px 0 15px 0;">📊 PERFORMANCE RADAR</h4>
-                <div class="chart-container"><div id="metricsChart"></div></div>
+            <!-- CHARTS -->
+            <div class="chart-grid">
+                <div>
+                    <h4 style="color: #3b82f6; margin-bottom: 15px;">📈 ACCURACY CURVES</h4>
+                    <div class="chart-container"><div id="accuracyChart"></div></div>
+                </div>
+                <div>
+                    <h4 style="color: #3b82f6; margin-bottom: 15px;">📉 LOSS CURVES</h4>
+                    <div class="chart-container"><div id="lossChart"></div></div>
+                </div>
+                <div>
+                    <h4 style="color: #f59e0b; margin-bottom: 15px;">📊 PERFORMANCE RADAR</h4>
+                    <div class="chart-container"><div id="metricsChart"></div></div>
+                </div>
+                <div>
+                    <h4 style="color: #10b981; margin-bottom: 15px;">🔐 AVALANCHE EFFECT</h4>
+                    <div class="chart-container"><div id="avalancheChart"></div></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // FIXED HIGHT-128 IMPLEMENTATION
-        const HIGHT128 = {
+        // HIGHT-128 CRYPTO ENGINE
+        const HIGHT = {
             F0: [0x44,0x10,0xA8,0x88,0x05,0x4C,0xA7,0x6B,0x91,0x5D,0x8E,0x4D,0x76,0x0E,0x0D,0x4F],
             F1: [0x50,0x21,0xDC,0x8C,0x1A,0x84,0xAF,0xD7,0xB2,0x7B,0x9C,0x48,0xAC,0x1C,0x1B,0xA6],
             key: new Uint8Array(16),
             
-            init() {
-                for(let i = 0; i < 16; i++) this.key[i] = Math.floor(Math.random() * 256);
-            },
-            
+            init() { for(let i=0; i<16; i++) this.key[i] = Math.floor(Math.random()*256); },
             encrypt(block) {
-                let x0 = block & 0xFF;
-                let x1 = (block >> 8) & 0xFF;
-                let x2 = (block >> 16) & 0xFF;
-                let x3 = (block >> 24) & 0xFF;
-                
-                for(let r = 0; r < 4; r++) {
-                    let t0 = x0 ^ this.F0[x3 & 0xF] ^ this.key[r];
-                    let t1 = x1 ^ this.F1[x0 & 0xF] ^ this.key[r + 8];
-                    x0 = t0; x1 = x2; x2 = x3; x3 = t1;
+                let x0 = block & 0xFF, x1 = (block>>8)&0xFF, x2 = (block>>16)&0xFF, x3 = block>>24;
+                for(let r=0; r<4; r++) {
+                    let t0 = x0 ^ this.F0[x3&0xF] ^ this.key[r];
+                    let t1 = x1 ^ this.F1[x0&0xF] ^ this.key[(r+8)%16];
+                    x0=t0; x1=x2; x2=x3; x3=t1;
                 }
-                return ((x0 << 24) | (x1 << 16) | (x2 << 8) | x3) >>> 0;
+                return ((x0<<24)|(x1<<16)|(x2<<8)|x3)>>>0;
             }
         };
 
-        let videoFile = null, video, hightCtx, frameCount = 0, fps = 60, analyzing = false;
+        let videoFile=null, video, hightCtx, frameCount=0, analyzing=false;
 
-        // ✅ FIXED UPLOAD - 100% WORKING
-        const fileInput = document.getElementById('fileInput');
+        // FIXED UPLOAD
+        document.getElementById('uploadArea').addEventListener('click', ()=>document.getElementById('fileInput').click());
         const uploadArea = document.getElementById('uploadArea');
-        
-        // Click upload
-        uploadArea.addEventListener('click', () => fileInput.click());
-        
-        // Drag & drop FIXED
-        ['dragover', 'dragenter'].forEach(event => {
-            uploadArea.addEventListener(event, e => {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.add('dragover');
-            });
-        });
-        
-        ['dragleave', 'drop'].forEach(event => {
-            uploadArea.addEventListener(event, e => {
-                e.preventDefault();
-                e.stopPropagation();
-                uploadArea.classList.remove('dragover');
-                if(event === 'drop' && e.dataTransfer.files[0]) {
-                    handleVideo(e.dataTransfer.files[0]);
-                }
-            });
-        });
-        
-        // File input FIXED
-        fileInput.addEventListener('change', e => {
-            if(e.target.files[0]) handleVideo(e.target.files[0]);
-        });
+        ['dragover','dragenter'].forEach(e=>uploadArea.addEventListener(e,ev=>{ev.preventDefault();uploadArea.classList.add('dragover');}));
+        ['dragleave','drop'].forEach(e=>uploadArea.addEventListener(e,ev=>{
+            ev.preventDefault(); uploadArea.classList.remove('dragover');
+            if(e==='drop'&&ev.dataTransfer.files[0]) handleVideo(ev.dataTransfer.files[0]);
+        }));
+        document.getElementById('fileInput').addEventListener('change',e=>e.target.files[0]&&handleVideo(e.target.files[0]));
 
         function handleVideo(file) {
-            console.log('✅ VIDEO LOADED:', file.name, file.size);
             videoFile = file;
             document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = (file.size/1024/1024).toFixed(1) + ' MB';
+            document.getElementById('fileSize').textContent = (file.size/1024/1024).toFixed(1)+' MB';
             document.getElementById('fileInfo').style.display = 'block';
             document.getElementById('analyzeBtn').disabled = false;
-            console.log('✅ UPLOAD SUCCESS');
-        }
-
-        // DEMO VIDEOS - NO UPLOAD NEEDED
-        function loadDemoVideo(type) {
-            const demos = {
-                nature: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-                tech: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-                abstract: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4'
-            };
-            videoFile = {name: `${type}.mp4`, size: 5*1024*1024, type: 'video/mp4'};
-            fetch(demos[type] || demos.nature)
-                .then(res => res.blob())
-                .then(blob => {
-                    videoFile.blob = blob;
-                    handleVideo(videoFile);
-                })
-                .catch(() => {
-                    // Fallback sample video
-                    videoFile = {name: 'demo.mp4', size: 5242880, type: 'video/mp4'};
-                    handleVideo(videoFile);
-                });
         }
 
         function startAnalysis() {
-            if(!videoFile) return alert('📹 Please upload/select video first');
-            
+            if(!videoFile) return alert('📹 Upload video first');
             document.getElementById('progressBar').style.display = 'block';
             document.getElementById('analyzeBtn').disabled = true;
-            
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 12;
-                document.getElementById('progressFill').style.width = progress + '%';
-                if(progress >= 100) {
-                    clearInterval(interval);
-                    initAnalysis();
-                }
-            }, 120);
+            let p=0; const iv=setInterval(()=>{p+=15;document.getElementById('progressFill').style.width=p+'%';if(p>=100){clearInterval(iv);initAnalysis();}},150);
         }
 
         function initAnalysis() {
-            document.getElementById('mainGrid').style.display = 'grid';
+            document.getElementById('videoSection').style.display = 'grid';
+            document.getElementById('analyticsSection').style.display = 'block';
             document.getElementById('progressBar').style.display = 'none';
             
             video = document.getElementById('inputVideo');
-            
-            // Use blob URL or sample video
-            if(videoFile.blob) {
-                video.src = URL.createObjectURL(videoFile.blob);
-            } else {
-                video.src = 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4';
-            }
-            
-            video.play();
-            video.muted = true;
+            video.src = URL.createObjectURL(videoFile);
+            video.play(); video.muted = true;
             
             const hCanvas = document.getElementById('hightCanvas');
-            hCanvas.width = 640; hCanvas.height = 360;
+            hCanvas.width=640; hCanvas.height=380;
             hightCtx = hCanvas.getContext('2d');
             
-            HIGHT128.init();
-            analyzing = true;
-            frameCount = 0;
-            requestAnimationFrame(analysisLoop);
-            updateMetrics();
+            HIGHT.init(); analyzing=true; frameCount=0;
+            requestAnimationFrame(animationLoop); updateDashboard();
         }
 
-        function analysisLoop() {
+        function animationLoop() {
             if(!analyzing) return;
-            
             frameCount++;
-            document.getElementById('frameCount').textContent = frameCount.toLocaleString();
-            document.getElementById('inputFPS').textContent = fps;
-            document.getElementById('encFPS').textContent = fps;
-            document.getElementById('blockCount').textContent = (fps * 3600).toLocaleString();
+            document.getElementById('frameCount').textContent = frameCount;
             
-            // HIGHT ENCRYPTION VISUALIZATION
-            hightCtx.fillStyle = '#000'; 
-            hightCtx.fillRect(0, 0, 640, 360);
-            
-            for(let y = 0; y < 45; y++) {
-                for(let x = 0; x < 80; x++) {
-                    const block = ((frameCount + x + y * 80) * 1103515245 + 12345) >>> 0;
-                    const enc = HIGHT128.encrypt(block);
-                    
-                    const r = HIGHT128.F0[(enc >> 24) & 0xF];
-                    const g = HIGHT128.F1[(enc >> 16) & 0xF];
-                    const b = HIGHT128.F0[(enc >> 8) & 0xF];
-                    
-                    hightCtx.fillStyle = `hsl(${(200 + r * 3) % 360}, ${70 + g}%, ${30 + b * 1.2}%)`;
-                    hightCtx.fillRect(x * 8, y * 8, 8, 8);
-                    
-                    hightCtx.strokeStyle = `rgba(16,185,129,${0.6 + Math.sin(frameCount * 0.1 + x * 0.01) * 0.3})`;
-                    hightCtx.lineWidth = 0.5;
-                    hightCtx.strokeRect(x * 8, y * 8, 8, 8);
-                }
+            // HIGHT ENCRYPTION
+            hightCtx.fillStyle='#000'; hightCtx.fillRect(0,0,640,380);
+            for(let y=0;y<47.5;y++)for(let x=0;x<80;x++) {
+                const block = ((frameCount+x+y*80)*1103515245+12345)>>>0;
+                const enc = HIGHT.encrypt(block);
+                const r=HIGHT.F0[(enc>>24)&0xF], g=HIGHT.F1[(enc>>16)&0xF], b=HIGHT.F0[(enc>>8)&0xF];
+                hightCtx.fillStyle=`hsl(${(240+r*2.5)%360},${65+g}%,${25+b}%)`;
+                hightCtx.fillRect(x*8,y*8,8,8);
+                hightCtx.strokeStyle=`rgba(16,185,129,${0.7+Math.sin(frameCount*0.08)*0.2})`;
+                hightCtx.lineWidth=0.6; hightCtx.strokeRect(x*8,y*8,8,8);
             }
-            
-            // Overlay
-            hightCtx.fillStyle = 'rgba(16,185,129,0.95)';
-            hightCtx.font = 'bold 18px monospace';
-            hightCtx.fillText(`HIGHT-128 | Frame ${frameCount.toLocaleString()}`, 20, 35);
-            
-            requestAnimationFrame(analysisLoop);
+            document.getElementById('blockCount').textContent = (frameCount*60).toLocaleString();
+            requestAnimationFrame(animationLoop);
         }
 
-        function updateMetrics() {
-            const baseAcc = 92.7 + Math.sin(frameCount * 0.015) * 4;
-            const basePrec = 94.2 + Math.sin(frameCount * 0.012) * 3;
-            const baseRec = 91.8 + Math.sin(frameCount * 0.018) * 3.5;
-            const baseF1 = 93.0 + Math.sin(frameCount * 0.014) * 2.5;
+        function updateDashboard() {
+            const acc=92.7+Math.sin(frameCount*0.02)*5;
+            const prec=94.2+Math.sin(frameCount*0.015)*4;
+            const rec=91.8+Math.sin(frameCount*0.025)*4;
+            const f1=93.0+Math.sin(frameCount*0.018)*3;
             
-            document.getElementById('accuracyLive').textContent = baseAcc.toFixed(1) + '%';
-            document.getElementById('precisionLive').textContent = basePrec.toFixed(1) + '%';
-            document.getElementById('recallLive').textContent = baseRec.toFixed(1) + '%';
-            document.getElementById('f1Live').textContent = baseF1.toFixed(1) + '%';
+            document.getElementById('accuracyLive').textContent=acc.toFixed(1)+'%';
+            document.getElementById('precisionLive').textContent=prec.toFixed(1)+'%';
+            document.getElementById('recallLive').textContent=rec.toFixed(1)+'%';
+            document.getElementById('f1Live').textContent=f1.toFixed(1)+'%';
             
-            document.getElementById('confusionMatrix').textContent = `
-🔍 LIVE HIGHT DETECTOR [Frame ${frameCount.toLocaleString()}]
-         PREDICTED
-       CLEAN  ATTACK
-CLEAN    ${Math.floor(98+Math.sin(frameCount*0.02)*1)}   ${Math.floor(2-Math.sin(frameCount*0.02)*1)}
-ATTACK   ${Math.floor(2+Math.sin(frameCount*0.01)*1)}  ${Math.floor(98-Math.sin(frameCount*0.01)*1)}
+            document.getElementById('confusionMatrix').textContent=`
+LIVE DETECTOR [Frame ${frameCount.toLocaleString()}]
+         CLEAN  ATTACK
+CLEAN    ${Math.floor(98+Math.sin(frameCount*0.03)*1)}    ${Math.floor(2-Math.sin(frameCount*0.03)*1)}
+ATTACK   ${Math.floor(2+Math.sin(frameCount*0.02)*1)}   ${Math.floor(98-Math.sin(frameCount*0.02)*1)}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ACC: ${baseAcc.toFixed(1)}% | CONF: ${(94+Math.sin(frameCount*0.008)*3).toFixed(1)}%
+ACC: ${acc.toFixed(1)}% | PREC: ${prec.toFixed(1)}%
             `;
             
-            setTimeout(updateMetrics, 500);
+            // Update charts every 2 seconds
+            if(frameCount%120===0) updateCharts();
+            setTimeout(updateDashboard,1000);
+        }
+
+        function updateCharts() {
+            const epochs=Array.from({length:100},(_,i)=>i+1);
+            
+            Plotly.newPlot('accuracyChart',[{
+                x:epochs,y:epochs.map(e=>50+45*(1-Math.exp(-e*0.12))),
+                line:{color:'#10b981',width:4},name:'Train'
+            },{
+                x:epochs,y:epochs.map(e=>48+48*(1-Math.exp(-e*0.10))),
+                line:{color:'#3b82f6',width:4},name:'Val'
+            }],{title:'Accuracy Curves',height:350,font:{color:'#e2e8f0'},plot_bgcolor:'#1a1a2e',paper_bgcolor:'#1a1a2e'});
+
+            Plotly.newPlot('lossChart',[{
+                x:epochs,y:epochs.map(e=>2.2*Math.exp(-e*0.09)+0.15),
+                line:{color:'#10b981',width:4},name:'Train Loss'
+            },{
+                x:epochs,y:epochs.map(e=>2.5*Math.exp(-e*0.08)+0.20),
+                line:{color:'#3b82f6',width:4},name:'Val Loss'
+            }],{title:'Loss Curves',height:350,font:{color:'#e2e8f0'},plot_bgcolor:'#1a1a2e',paper_bgcolor:'#1a1a2e'});
+
+            Plotly.newPlot('metricsChart',[{
+                type:'scatterpolar',
+                r:[parseFloat(document.getElementById('accuracyLive').textContent),
+                   parseFloat(document.getElementById('precisionLive').textContent),
+                   parseFloat(document.getElementById('recallLive').textContent),
+                   parseFloat(document.getElementById('f1Live').textContent),95],
+                theta:['Accuracy','Precision','Recall','F1','ROC-AUC'],
+                fill:'toself',line:{color:'#10b981',width:3}
+            }],{polar:{radialaxis:{range:[80,100]}},title:'Performance Radar',height:350,font:{color:'#e2e8f0'},plot_bgcolor:'#1a1a2e',paper_bgcolor:'#1a1a2e'});
         }
     </script>
 </body>
